@@ -13,7 +13,7 @@ Deviation can be see in the file `richelot_aux.sage` in the functions:
 * `FromProdToJac()`
 * `FromJacToJac()`
 
-Thanks to Rémy Oudompheng for deriving and implementing these algorithms.
+Thanks to [Rémy Oudompheng](https://twitter.com/oudomphe) for deriving and implementing these algorithms.
 
 ## Baby Example
 
