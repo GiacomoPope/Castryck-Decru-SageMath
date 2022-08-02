@@ -43,7 +43,7 @@ def FromProdToJac(C, E, P_c, Q_c, P, Q, a):
     H = HyperellipticCurve(h)
     J = H.jacobian()
 
-    #We need the image of (P_c, P) and (Q_c, Q) in J
+    # We need the image of (P_c, P) and (Q_c, Q) in J
     # The image of (P_c, P) is the image of P_c as a divisor on H
     # plus the image of P as a divisor on H.
     # This allows for direct computation without solving equations
