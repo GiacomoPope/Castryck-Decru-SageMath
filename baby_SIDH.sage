@@ -138,6 +138,59 @@ print(skB)
 # === Remaining magma to convert! ===
 # ===================================
 
+// now compute longest prolongation of Bob's isogeny that may be needed
+
+length := 1;
+max_length := 0;
+for i in [bet1+1..b-3] do
+  if expdata[i][1] ne 0 then
+    max_length := Max(length, max_length);
+    length := 0;
+  else
+    length +:= 1;
+  end if;
+end for;
+
+repeat
+  K := 2^a*3^(b - max_length)*Random(EB);
+until Order(K) eq 3^max_length;
+
+repeat
+  alternativeK := 2^a*3^(b - max_length)*Random(EB);
+until WeilPairing(K, alternativeK, 3^max_length)^(3^(max_length - 1)) ne 1;
+
+_, EBprolong := Pushing3Chain(EB, K, max_length);
+
+// gather next digit and change prolongation if needed
+
+i := bet1 + 1;
+bi := b - i;
+
+print "Determination of the "*IntegerToString(i)*"th ternary digit. We are working with 2^"*IntegerToString(ai)*"-torsion.";
+prolong := 1;
+print "Prolonging with 1 steps.";
+endPB := EBprolong[1](PB);
+endQB := EBprolong[1](QB);
+endEB := Codomain(EBprolong[1]);
+
+positives := [];
+
+for j in [0..2] do
+  print "Testing digit", j;
+  tauhatkernel := 3^bi*P3 + (&+[3^(k-1)*skB[k] : k in [1..i-1]] + 3^(i-1)*j)*3^bi*Q3;
+  tauhatkernel_distort := u*tauhatkernel + v*two_i(tauhatkernel);
+  C, tau_tilde := Pushing3Chain(E_start, tauhatkernel_distort, i);
+  P_c := u*P2 + v*two_i(P2); for taut in tau_tilde do P_c := taut(P_c); end for;
+  Q_c := u*Q2 + v*two_i(Q2); for taut in tau_tilde do Q_c := taut(Q_c); end for;
+  if Does22ChainSplit(C, endEB, 2^alp*P_c, 2^alp*Q_c, 2^alp*endPB, 2^alp*endQB, ai) then
+    print "Glue-and-split!";
+    positives cat:=[j];
+    if #positives gt 1 then
+      break;
+    end if;
+  end if;
+end for;
+
 if #positives eq 1 then
   print "Most likely good prolongation and the secret digit is", positives[1];
   skB cat:= [positives[1]];
