@@ -50,9 +50,9 @@ def FromProdToJac(C, E, P_c, Q_c, P, Q, a):
     Uff = Uff_poly.fraction_field()
     Uff.inject_variables()
 
-    # A4.<U0, U1, V0, V1> = AffineSpace(Fp2, 4)
-    U.<U0, U1, V0, V1> = PolynomialRing(Fp2, 4)
-    # U = U0.parent()
+    A4.<U0, U1, V0, V1> = AffineSpace(Fp2, 4)
+    # U.<U0, U1, V0, V1> = PolynomialRing(Fp2, 4)
+    U = U0.parent()
 
     u0tilde = 1/u0
     u1tilde = u1/u0
