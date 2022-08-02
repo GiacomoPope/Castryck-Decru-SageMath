@@ -2,6 +2,8 @@ def Coefficient(h, n):
     """
     Helper function to make things look similar!
     """
+    assert h.denominator().is_one()
+    h = h.numerator()
     return h[n]
 
 def FromProdToJac(C, E, P_c, Q_c, P, Q, a):
@@ -69,17 +71,19 @@ def FromProdToJac(C, E, P_c, Q_c, P, Q, a):
     imQcQ = JQ + JQc
 
     # Validate result
-    def projC(x, y):
-        return (s1 / x^2 + s2, Deltbet / A^3 * y / x^3)
-    def projE(x, y):
-        return (t1 * x^2 + t2, Deltalp / B^3 * y)
-    kq = Fp2.extension(2)
-    divP = [(xr, imPcP[1](xr)) for xr, _ in imPcP[0].roots(kq)]
-    assert 2*P == sum(E(*projE(*pt)) for pt in divP)
-    assert 2*P_c == sum(C(*projC(*pt)) for pt in divP)
-    divQ = [(xr, imQcQ[1](xr)) for xr, _ in imQcQ[0].roots(kq)]
-    assert 2*Q == sum(E(*projE(*pt)) for pt in divQ)
-    assert 2*Q_c == sum(C(*projC(*pt)) for pt in divQ)
+    def projC(_x, _y):
+        return (s1 / _x^2 + s2, Deltbet / A^3 * _y / _x^3)
+    def projE(_x, _y):
+        return (t1 * _x^2 + t2, Deltalp / B^3 * _y)
+    Fp4 = Fp2.extension(2)
+    E4 = E.change_ring(Fp4)
+    C4 = C.change_ring(Fp4)
+    divP = [(xr, imPcP[1](xr)) for xr, _ in imPcP[0].roots(Fp4)]
+    assert 2*E4(P) == sum(E4(*projE(*pt)) for pt in divP)
+    assert 2*C4(P_c) == sum(C4(*projC(*pt)) for pt in divP)
+    divQ = [(xr, imQcQ[1](xr)) for xr, _ in imQcQ[0].roots(Fp4)]
+    assert 2*E4(Q) == sum(E4(*projE(*pt)) for pt in divQ)
+    assert 2*C4(Q_c) == sum(C4(*projC(*pt)) for pt in divQ)
 
     return h, imPcP[0], imPcP[1], imQcQ[0], imQcQ[1]
 
@@ -91,23 +95,29 @@ def test_FromProdToJac():
     E = EllipticCurve(k, [-1, 0])
     assert E.is_supersingular()
     assert E.order() == 2**122
-    C = E.isogeny_codomain([1, 0])
+    C = EllipticCurve(k, [1, 0])
+    assert C.is_supersingular()
+    assert C.order() == 2**122
     a = 61
     Pc, Qc = C.gens()
     Q, P = E.gens()
-    FromProdToJac(C, E, Pc, Qc, P, Q, a)
+    return FromProdToJac(C, E, Pc, Qc, P, Q, a)
 
 def FromJacToJac(h, D11, D12, D21, D22, a):
-    R.<x> = h.parent()
+    R = h.parent()
+    x = R.gens()[0]
     Fp2 = R.base()
 
     J = Jacobian(HyperellipticCurve(h))
     D1 = J(D11, D12)
     D2 = J(D21, D22)
 
-    G1 = (2^(a-1)*D1)[0]
-    G2 = (2^(a-1)*D2)[0]
-    G3 = h / (G1*G2)
+    G1, _ = 2^(a-1)*(D1)
+    G2, _ = 2^(a-1)*(D2)
+    assert 2^a*D1 == 0
+    assert 2^a*D2 == 0
+    G3, r3 = h.quo_rem(G1 * G2)
+    assert r3 == 0
 
     delta = Matrix(Fp2, 3, 3, [Coefficient(G1, 0), Coefficient(G1, 1), Coefficient(G1, 2),
                               Coefficient(G2, 0), Coefficient(G2, 1), Coefficient(G2, 2),
@@ -121,50 +131,49 @@ def FromJacToJac(h, D11, D12, D21, D22, a):
     hnew = H1*H2*H3
     Jnew = Jacobian(HyperellipticCurve(hnew))
 
-    # now compute image points
-    # first the point [D11, D12]:
+    # Now compute image points: Richelot isogeny is defined by the degree 2
+    # correspondence:
+    # g1(x1) h1(x2) + g2(x1) h2(x2) = 0
+    # or y1 y2 = g1(x1) h1(x2) (x1 - x2)
 
-    u0 = Coefficient(D11, 0)
-    u1 = Coefficient(D11, 1)
-    v0 = Coefficient(D12, 0)
-    v1 = Coefficient(D12, 1)
-    S.<x1,y1,y2,x2> = PolynomialRing(Fp2, 4)
-    # TODO: How is this computed in sage?
-    # pr = hom<S -> R | 0, 0, 0, x>
+    # In general Jacobian points over k will define curve points in a quadratic
+    # extension:
+    Fp4 = Fp2.extension(2)
+    # Convert D1 to a divisor
+    # FIXME: account for multiplicities
+    Div1 = [(xr, D12(xr)) for xr, _ in D11.roots(Fp4)]
+    assert len(Div1) == 2
+    # Each point of the divisor defines a divisor on Hnew
+    # Use formulas above to get the Mumford coordinates.
+    (x11, y11), (x12, y12) = Div1
+    Dnew11 = Jnew([
+        G1(x11) * H1 + G2(x11) * H2,
+        G1(x11) * H1 * (x11 - x) / y11])
+    Dnew12 = Jnew([
+        G1(x12) * H1 + G2(x12) * H2,
+        G1(x12) * H1 * (x12 - x) / y12])
+    imD1 = Dnew11 + Dnew12
 
-    eq1 = x1^2 + u1*x1 + u0
-    eq2 = v1*x1 + v0 - y1
-    # TODO: What is evaluate doing?
-    # eq3 = Evaluate(G1, x1)*Evaluate(H1, x2) + Evaluate(G2, x1)*Evaluate(H2, x2)
-    # eq4 = y1*y2 - Evaluate(G1, x1)*Evaluate(H1, x2)*(x1 - x2)
-    # eq5 = y1^2 - Evaluate(h, x1)
-
-    I = Ideal([eq1, eq2, eq3, eq4, eq5])
-    G = GroebnerBasis(I) # last two are in non-reduced Mumford form: y2 + cubic(x2), quartic(x2)
-    # TODO what is pr?
-    # unew = pr(G[len(G)])
-    # vnew = -pr(G[len(G)-1])
-    # sanity check: (vnew^2 - hnew) mod unew
-    # TODO what is pr?
-    # imD1 = Jnew(pr(G[len(G)]), -pr(G[len(G)-1]))
-
-    # now same for the point [D21, D22]:
-
-    u0 = Coefficient(D21, 0)
-    u1 = Coefficient(D21, 1)
-    v0 = Coefficient(D22, 0)
-    v1 = Coefficient(D22, 1)
-    eq1 = x1^2 + u1*x1 + u0
-    eq2 = v1*x1 + v0 - y1
-    I = Ideal([eq1, eq2, eq3, eq4, eq5])
-    G = GroebnerBasis(I)
-    # TODO what is pr?
-    # unew = pr(G[len(G)])
-    # vnew = -pr(G[len(G)-1])
-    # TODO what is pr?
-    # imD2 = Jnew(pr(G[len(G)]), -pr(G[len(G)-1]))
+    # And D2
+    Div2 = [(xr, D22(xr)) for xr, _ in D21.roots(Fp4)]
+    assert len(Div2) == 2
+    (x21, y21), (x22, y22) = Div2
+    Dnew21 = Jnew([
+        G1(x21) * H1 + G2(x21) * H2,
+        G1(x21) * H1 * (x21 - x) / y21])
+    Dnew22 = Jnew([
+        G1(x22) * H1 + G2(x22) * H2,
+        G1(x22) * H1 * (x22 - x) / y22])
+    imD2 = Dnew21 + Dnew22
 
     return hnew, imD1[0], imD1[1], imD2[0], imD2[1]
+
+def test_FromJacToJac():
+    print("test_FromJacToJac")
+    h, D11, D12, D21, D22 = test_FromProdToJac()
+    FromJacToJac(h, D11, D12, D21, D22, 60)
+
+#test_FromJacToJac()
 
 def Does22ChainSplit(C, E, P_c, Q_c, P, Q, a):
     Fp2 = C.base()
