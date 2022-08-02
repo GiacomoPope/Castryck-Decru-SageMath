@@ -145,7 +145,7 @@ for i in range(bet1 + 1, b - 2):
   if expdata[i][0] != 0:
     max_length = max(length, max_length)
     length = 0
-  else
+  else:
     length += 1
 
 while True:
@@ -164,9 +164,9 @@ _, EBprolong = Pushing3Chain(EB, K, max_length)
 i = bet1 + 1
 bi = b - i
 
-print (f"Determination of the {i}th ternary digit. We are working with 2^{ai}-torsion.")
+print(f"Determination of the {i}th ternary digit. We are working with 2^{ai}-torsion.")
 prolong = 1
-print "Prolonging with 1 steps."
+print("Prolonging with 1 steps.")
 endPB = EBprolong[0](PB)
 endQB = EBprolong[0](QB)
 endEB = EBprolong[0].codomain()
@@ -220,7 +220,7 @@ for i in range(next_i, b-2):
         u = expdata[i][2]
         v = expdata[i][3]
         prolong = 0
-    else
+    else:
         prolong += 1
 
     print(f"Determination of the {i}th ternary digit. We are working with 2^{ai}-torsion.")
@@ -229,7 +229,7 @@ for i in range(next_i, b-2):
     endQB = QB
     endEB = EB
     # for j in [1..prolong] do
-    for j in range(1,prolong+1)
+    for j in range(1,prolong+1):
         endPB = EBprolong[j-1](endPB)
         endQB = EBprolong[j-1](endQB)
     if j == prolong:
@@ -278,7 +278,7 @@ print(f"Bridging last gap took: {time.time() - tim2}")
 if found:
     print(f"Bob's secret key revealed as: {bobskey}")
     print(f"In ternary, this is: {Integer(bobskey).digits(base=3)}")
-else
+else:
     print("Something went wrong.")
 
 print(f"Altogether this took {time.time() - tim} seconds.")
