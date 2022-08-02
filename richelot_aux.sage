@@ -147,6 +147,7 @@ def FromJacToJac(h, D11, D12, D21, D22, a):
     # In general Jacobian points over k will define curve points in a quadratic
     # extension:
     Fp4 = Fp2.extension(2)
+    R4 = Fp4[x]
     # Convert D1 to a divisor
     # FIXME: account for multiplicities
     Div1 = [(xr, D12(xr)) for xr, _ in D11.roots(Fp4)]
@@ -155,11 +156,11 @@ def FromJacToJac(h, D11, D12, D21, D22, a):
     # Use formulas above to get the Mumford coordinates.
     (x11, y11), (x12, y12) = Div1
     Dnew11 = Jnew([
-        G1(x11) * H1 + G2(x11) * H2,
-        G1(x11) * H1 * (x11 - x) / y11])
+        G1(x11) * R4(H1) + G2(x11) * R4(H2),
+        G1(x11) * R4(H1) * (x11 - R4(x)) / y11])
     Dnew12 = Jnew([
-        G1(x12) * H1 + G2(x12) * H2,
-        G1(x12) * H1 * (x12 - x) / y12])
+        G1(x12) * R4(H1) + G2(x12) * R4(H2),
+        G1(x12) * R4(H1) * (x12 - R4(x)) / y12])
     imD1 = Dnew11 + Dnew12
 
     # And D2
@@ -167,11 +168,11 @@ def FromJacToJac(h, D11, D12, D21, D22, a):
     assert len(Div2) == 2
     (x21, y21), (x22, y22) = Div2
     Dnew21 = Jnew([
-        G1(x21) * H1 + G2(x21) * H2,
-        G1(x21) * H1 * (x21 - x) / y21])
+        G1(x21) * R4(H1) + G2(x21) * R4(H2),
+        G1(x21) * R4(H1) * (x21 - R4(x)) / y21])
     Dnew22 = Jnew([
-        G1(x22) * H1 + G2(x22) * H2,
-        G1(x22) * H1 * (x22 - x) / y22])
+        G1(x22) * R4(H1) + G2(x22) * R4(H2),
+       G1(x22) * R4(H1) * (x22 - R4(x)) / y22])
     imD2 = Dnew21 + Dnew22
 
     # Go down to original field
