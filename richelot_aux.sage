@@ -71,17 +71,18 @@ def FromProdToJac(C, E, P_c, Q_c, P, Q, a):
     imQcQ = JQ + JQc
 
     # Validate result
-    def projC(_x, _y):
-        return (s1 / _x^2 + s2, Deltbet / A^3 * _y / _x^3)
-    def projE(_x, _y):
-        return (t1 * _x^2 + t2, Deltalp / B^3 * _y)
-    Fp4 = Fp2.extension(2)
-    E4 = E.change_ring(Fp4)
-    C4 = C.change_ring(Fp4)
-    divP = [(xr, imPcP[1](xr)) for xr, _ in imPcP[0].roots(Fp4)]
+    # For debugging
+    # def projC(_x, _y):
+    #     return (s1 / _x^2 + s2, Deltbet / A^3 * _y / _x^3)
+    # def projE(_x, _y):
+    #     return (t1 * _x^2 + t2, Deltalp / B^3 * _y)
+    # Fp4 = Fp2.extension(2)
+    # E4 = E.change_ring(Fp4)
+    # C4 = C.change_ring(Fp4)
+    # divP = [(xr, imPcP[1](xr)) for xr, _ in imPcP[0].roots(Fp4)]
     # assert 2*E4(P) == sum(E4(*projE(*pt)) for pt in divP)
     # assert 2*C4(P_c) == sum(C4(*projC(*pt)) for pt in divP)
-    divQ = [(xr, imQcQ[1](xr)) for xr, _ in imQcQ[0].roots(Fp4)]
+    # divQ = [(xr, imQcQ[1](xr)) for xr, _ in imQcQ[0].roots(Fp4)]
     # assert 2*E4(Q) == sum(E4(*projE(*pt)) for pt in divQ)
     # assert 2*C4(Q_c) == sum(C4(*projC(*pt)) for pt in divQ)
 
