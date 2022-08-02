@@ -53,7 +53,17 @@ verbose 0 (1081: multi_polynomial_ideal.py, dimension) Warning: falling back to 
 
 The current goal is to re-write the above code in a form that either `singular` or `Macaulay2` interfaces to play nicely with our code, but both seem to be really upset at trying to do this in the extension field `GF(p^2, modulus=x^2+1)` and give error messages.
 
-One suggestion has to be Weil-restrict the system to move form $F_{p^2}$ to $F_p$, however this increases the complexity of what we need to solve.
+One suggestion has to be Weil-restrict the system to move form $F_{p^2}$ to $F_p$ however, this increases the complexity of what we need to solve.
+
+Another suggestion ahs been to instead use resultants, but I get errors unless I compute resultants with
+
+```py
+from sage.matrix.matrix2 import Matrix 
+def resultant(f1, f2, var):
+    return Matrix.determinant(f1.sylvester_matrix(f2, var))
+```
+
+Which is too slow for our current needs.
 
 ## Magma files to convert
 
