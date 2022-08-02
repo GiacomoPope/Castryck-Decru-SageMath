@@ -86,7 +86,7 @@ Which is too slow for our current needs.
 - [x] Set small primes and torsion points
 - [x] Fill `expdata` data table from `uvtable.sage`
 - [ ] Compute the first bits using `Glue-and-split` (Partial progress)
-- [ ] Compute longest prolongation of Bob's isogeny
-- [ ] Compute next digit
-- [ ] Compute all digits except last 3
-- [ ] Find last three digits
+- [x] Compute longest prolongation of Bob's isogeny
+- [ ] Compute next digit (Partial progress)
+- [ ] Compute all digits except last 3 (Partial progress)
+- [x] Find last three digits
