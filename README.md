@@ -20,7 +20,7 @@ After this is done, it should be easy to make the changes for the harder challen
 - [ ] `FromProdToJac()` (Partial Progress) 
 - [ ] `FromJacToJac()`
 - [x] `Does22ChainSplit()`
-- [ ] `OddCyclicSumOfSquares()`
+- [x] `OddCyclicSumOfSquares()` (Dead code, not implemented)
 - [x] `Pushing3Chain()`
 - [x] `Pushing9Chain()`
 
