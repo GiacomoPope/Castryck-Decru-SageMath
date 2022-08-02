@@ -38,109 +38,66 @@ def FromProdToJac(C, E, P_c, Q_c, P, Q, a):
     s1 = -(B/A)*a2/a1
     s2 = (alp1*(alp3 - alp2)^2/(bet3 - bet2) + alp2*(alp1 - alp3)^2/(bet1 - bet3) + alp3*(alp2 - alp1)^2/(bet2 - bet1))/a1
 
-    """
-    We cannot do multivariate function fields, 
-    so I followed 
+    H = HyperellipticCurve(h)
+    J = H.jacobian()
 
-    https://ask.sagemath.org/question/37584/multivariate-rational-function-field-of-rank-3-over-rational-field/
-    
-    To create a rational function field from a polynomial ring
-    """
-    Uff_poly.<u0, u1, v0, v1> = PolynomialRing(Fp2, 4)
-    Uff = Uff_poly.fraction_field()
-    Uff.inject_variables()
+    # We need the image of (P_c, P) and (Q_c, Q) in J
+    # The image of (P_c, P) is the image of P_c as a divisor on H
+    # plus the image of P as a divisor on H.
+    # This allows for direct computation without solving equations
+    # as in Castryck-Decru's paper.
 
-    A4.<U0, U1, V0, V1> = AffineSpace(Fp2, 4)
-    # U.<U0, U1, V0, V1> = PolynomialRing(Fp2, 4)
-    U = U0.parent()
+    # The projection maps are:
+    # H->C: (xC = s1/x²+s2, yC = (Deltbet/A³)(y/x³))
+    # so we compute Mumford coordinates of the divisor f^-1(P_c): a(x), y-b(x)
+    xPc, yPc = P_c.xy()
+    mumPc = [x^2 - s1 / (xPc - s2), yPc * x^3 * A^3 / Deltbet]
+    JPc = J(mumPc)
+    # same for Q_c
+    xQc, yQc = Q_c.xy()
+    mumQc = [x^2 - s1 / (xQc - s2), yQc * x^3 * A^3 / Deltbet]
+    JQc = J(mumQc)
 
-    u0tilde = 1/u0
-    u1tilde = u1/u0
-    v0tilde = (u1*v0 - u0*v1)/u0^2
-    v1tilde = (u1^2*v0 - u0*v0 - u0*u1*v1)/u0^2
+    # Same for E
+    # H->E: (xE = t1 x² + t2, yE = (Deltalp/B³)y)
+    xP, yP = P.xy()
+    JP = J([t1* x^2 + t2 - xP, R(yP * B^3 / Deltalp)])
+    xQ, yQ = Q.xy()
+    JQ = J([t1* x^2 + t2 - xQ, R(yQ * B^3 / Deltalp)])
 
-    lamb1 = - ((Deltbet/A^3)*v1tilde)/(s1*u1tilde)
-    lamb2 = - ((Deltalp/B^3)*v1)/(t1*u1)
+    imPcP = JP + JPc
+    imQcQ = JQ + JQc
 
-    x1 = lamb1^2 + alp1 + alp2 + alp3 - s1*(u1tilde^2 - 2*u0tilde) - 2*s2
-    y1 = -lamb1*(x1 - s2 + (u0tilde*v1tilde - u1tilde*v0tilde)*s1/v1tilde)
-
-    x2 = lamb2^2 + bet1 + bet2 + bet3 - t1*(u1^2 - 2*u0) - 2*t2
-    y2 = -lamb2*(x2 - t2 + (u0*v1 - u1*v0)*t1/v1)
-
-    eq1 = U((x1 - P_c[0]).numerator())
-    eq2 = U((y1 - P_c[1]).numerator())
-    eq3 = U((x2 - P[0]).numerator())
-    eq4 = U((y2 - P[1]).numerator())
-
-    eq5  = 2*V0^2 - 2*V0*V1*U1 + V1^2*(U1^2 - 2*U0) 
-    eq5 -= 2*Coefficient(h, 0)
-    eq5 -= (-U1)*Coefficient(h, 1)
-    eq5 -= (U1^2 - 2*U0)*Coefficient(h, 2)
-    eq5 -= (-U1^3 + 3*U0*U1)*Coefficient(h, 3)
-    eq5 -= (U1^4 - 4*U1^2*U0 + 2*U0^2)*Coefficient(h, 4)
-    eq5 -= (-U1^5 + 5*U1^3*U0 - 5*U1*U0^2)*Coefficient(h, 5)
-    eq5 -= (U1^6 - 6*U1^4*U0 + 9*U1^2*U0^2 - 2*U0^3)*Coefficient(h, 6)
-
-    # UP TO HERE
-    # Find a way to quickly find solutions!!
-
-    V = A4.subscheme([eq1, eq2, eq3, eq4, eq5])
-
-    # # point with zero coordinates probably correspond to "extra" solutions, we should be left with 4 sols
-    # # (code may fail over small fields)
-
-    # from sage.matrix.matrix2 import Matrix 
-    # def resultant(f1, f2, var):
-    #     return Matrix.determinant(f1.sylvester_matrix(f2, var))
-
-    # tmp1 = resultant(eq3,  eq4, U0)
-    # print(tmp1)
-    # tmp2 = resultant(tmp1, eq5, V0)
-    # print(tmp2)  
-    # tmp3 = resultant(tmp2, eq1, V0)
-    # print(tmp3)  
-    # tmp4 = resultant(tmp3, eq2, V1)
-    # print(tmp4)
-
-    realsols = []
-    for D in V.rational_points():
-        print(D)
-        Dseq = list(D)
-        if not 0 in Dseq:
-            realsols.append(Dseq)
-
-    print(f"Number of inverse images found: {len(realsols)} (hopefully 4)")
-    
-    return False, False, False, False, False
-    # TODO below (similar to above)
-
-    J = Jacobian(HyperellipticCurve(h))
-    sol = choice(realsols)
-    D = J(x^2 + sol[1]*x + sol[0], sol[3]*x + sol[2])
-    imPcP = 2*D
-
-    # now for (Q_c, Q)
-
-    eq1 = U(Numerator(x1 - Q_c[0]))
-    eq2 = U(Numerator(y1 - Q_c[1]))
-    eq3 = U(Numerator(x2 - Q[0]))
-    eq4 = U(Numerator(y2 - Q[1]))
-
-    V = A4.subscheme([eq1, eq2, eq3, eq4, eq5])
-    realsols = []
-    for D in V.rational_points():
-        print(D)
-        Dseq = list(D)
-        if not 0 in Dseq:
-            realsols.append(Dseq)
-
-    print(f"Number of inverse images found: {len(realsols)} (hopefully 4)")
-    sol = choice(realsols)
-    D = J(x^2 + sol[1]*x + sol[0], sol[3]*x + sol[2])
-    imQcQ = 2*D
+    # Validate result
+    def projC(x, y):
+        return (s1 / x^2 + s2, Deltbet / A^3 * y / x^3)
+    def projE(x, y):
+        return (t1 * x^2 + t2, Deltalp / B^3 * y)
+    kq = Fp2.extension(2)
+    divP = [(xr, imPcP[1](xr)) for xr, _ in imPcP[0].roots(kq)]
+    assert 2*P == sum(E(*projE(*pt)) for pt in divP)
+    assert 2*P_c == sum(C(*projC(*pt)) for pt in divP)
+    divQ = [(xr, imQcQ[1](xr)) for xr, _ in imQcQ[0].roots(kq)]
+    assert 2*Q == sum(E(*projE(*pt)) for pt in divQ)
+    assert 2*Q_c == sum(C(*projC(*pt)) for pt in divQ)
 
     return h, imPcP[0], imPcP[1], imQcQ[0], imQcQ[1]
+
+def test_FromProdToJac():
+    # Choose some supersingular curves and 2^a torsion generators.
+    p = 2**61 - 1
+    assert p.is_prime()
+    k = GF(p^2)
+    E = EllipticCurve(k, [-1, 0])
+    assert E.is_supersingular()
+    assert E.order() == 2**122
+    C = E.isogeny_codomain([1, 0])
+    a = 61
+    Pc, Qc = C.gens()
+    Q, P = E.gens()
+    FromProdToJac(C, E, Pc, Qc, P, Q, a)
+
+#test_FromProdToJac()
 
 def FromJacToJac(h, D11, D12, D21, D22, a):
     R.<x> = h.parent()
