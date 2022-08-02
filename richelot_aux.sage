@@ -190,15 +190,15 @@ def Does22ChainSplit(C, E, P_c, Q_c, P, Q, a):
     Fp2 = C.base()
     # gluing step
     h, D11, D12, D21, D22 = FromProdToJac(C, E, P_c, Q_c, P, Q, a);
-    print(f"order 2^{a-1} on hyp curve {h}")
+    # print(f"order 2^{a-1} on hyp curve {h}")
     for i in range(1,a-2+1):
         h, D11, D12, D21, D22 = FromJacToJac(h, D11, D12, D21, D22, a-i)
-        print(f"order 2^{a - i - 1} on hyp curve {h}")
+        # print(f"order 2^{a - i - 1} on hyp curve {h}")
     # now we are left with a quadratic splitting: is it singular?
     G1 = D11
     G2 = D21
     G3 = h // (G1*G2)
-    print(G1, G2, G3)
+    # print(G1, G2, G3)
 
     delta = Matrix(Fp2, 3, 3, [Coefficient(G1, 0), Coefficient(G1, 1), Coefficient(G1, 2),
                                Coefficient(G2, 0), Coefficient(G2, 1), Coefficient(G2, 2),

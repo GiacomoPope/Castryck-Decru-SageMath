@@ -3,6 +3,7 @@ from itertools import product
 
 load('richelot_aux.sage')
 load('uvtable.sage')
+set_verbose(-1)
 
 a = 33
 b = 19
@@ -133,6 +134,7 @@ for j in product([0,1,2], repeat=int(bet1)):
         print("Glue-and-split! These are most likely the secret digits.")
         for k in j:
             skB.append(k)
+        break
 
 print(skB)
 
@@ -142,7 +144,7 @@ length = 1
 max_length = 0
 # for i in [bet1+1..b-3] do
 for i in range(bet1 + 1, b - 2):
-  if expdata[i][0] != 0:
+  if expdata[i-1][0] != 0:
     max_length = max(length, max_length)
     length = 0
   else:
@@ -199,7 +201,7 @@ for j in range(0,2+1):
         break
 
 if len(positives) == 1:
-    print(f"Most likely good prolongation and the secret digit is: {positives[1]}")
+    print(f"Most likely good prolongation and the secret digit is: {positives[0]}")
     skB.append(positives[0])
     next_i = i + 1
 else:
@@ -215,10 +217,10 @@ else:
 for i in range(next_i, b-2):
     bi = b - i
     if expdata[i-1][0] != 0:
-        ai = expdata[i][1]
+        ai = expdata[i-1][0]
         alp = a - ai
-        u = expdata[i][2]
-        v = expdata[i][3]
+        u = expdata[i-1][1]
+        v = expdata[i-1][2]
         prolong = 0
     else:
         prolong += 1
