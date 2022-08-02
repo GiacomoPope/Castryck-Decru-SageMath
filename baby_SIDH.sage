@@ -25,36 +25,27 @@ E1728.set_order((p+1)^2)
 for iota in E1728.automorphisms():
     P = E1728.random_point()
     if iota(iota(P)) == -P:
-        # two_i = phi.post_compose(iota).post_compose(phi.dual())
         two_i = -phi.dual()*iota*phi
         break
 
 infty = E_start(0)
 
-P2x = 3001978773937227303*i + 844826078775277193
-P2y = 7016480731488920513*i + 3336734539702591894
-P2 = E_start(P2x, P2y)
+def get_l_torsion_basis(E, l):
+    n = (p+1) // l
+    return (n*G for G in E.gens())
 
-Q2x = 9714335965426121848*i + 3634229810067794918
-Q2y = 6843179620215919990*i + 283325142855416748
-Q2 = E_start(Q2x, Q2y)
+P2, Q2 = get_l_torsion_basis(E_start, 2^a)
+P3, Q3 = get_l_torsion_basis(E_start, 3^b)
 
-P3x = 856716429329350834*i + 3275086448477871897
-P3y = 789318291276569898*i + 5513314229840294380
-P3 = E_start(P3x, P3y)
-
-Q3x = 9698695942032140636*i + 4611223447894666827
-Q3y = 4739425428244553293*i + 434003219133716652
-Q3 = E_start(Q3x, Q3y)
-
+# Make sure Torsion points are
+# generated correctly
 assert 2^(a-1)*P2 != infty
 assert 3^(b-1)*P3 != infty
 assert P2.weil_pairing(Q2, 2^a)^(2^(a-1)) != 1
 assert P3.weil_pairing(Q3, 3^b)^(3^(b-1)) != 1
 
 # generate challenge key
-# Bobskey = randint(0,3^b)
-Bobskey = 15002860
+Bobskey = randint(0,3^b)
 
 EB, chain = Pushing3Chain(E_start, P3 + Bobskey*Q3, b)
 # Speeds things up in Sage
@@ -66,11 +57,8 @@ QB = Q2
 for c in chain:
     QB = c(QB)
 
-
 skB = [] # DIGITS IN EXPANSION OF BOB'S SECRET KEY
-
 print(f"If all goes well then the following digits should be found: {Integer(Bobskey).digits(base=3)}")
-
 
 
 # ===================================
@@ -262,7 +250,7 @@ for i in range(next_i, b-2):
             skB.append(j)
             break
 
-key = sum(skB[i-1]*3^(i-1) for i in range(1..b-2))
+key = sum([skB[i-1]*3^(i-1) for i in range(1,b-2)])
 
 # bridge last safety gap
 tim2 = time.time()
@@ -270,7 +258,7 @@ tim2 = time.time()
 found = false
 for i in range(3^5+1):
     bobskey = key + i*3^(b-3)
-    bobscurve = Pushing3Chain(E_start, P3 + bobskey*Q3, b)
+    bobscurve, _ = Pushing3Chain(E_start, P3 + bobskey*Q3, b)
     if bobscurve.j_invariant() == EB.j_invariant():
         found = true
         break
