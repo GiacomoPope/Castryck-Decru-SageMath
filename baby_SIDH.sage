@@ -5,6 +5,9 @@ load('richelot_aux.sage')
 load('uvtable.sage')
 set_verbose(-1)
 
+# Small values of a,b such that:
+# p is prime and
+# p % 4 == 3
 a = 33
 b = 19
 
