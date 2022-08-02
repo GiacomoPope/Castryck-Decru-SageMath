@@ -1,6 +1,6 @@
 # Castryck-Decru Key Recovery Attack on SIDH
 
-Attempt at a SageMath implementation of "An efficient key recovery attack on SIDH, with Thomas Decru, preliminary version", based on supplied Magma code from [https://homes.esat.kuleuven.be/~wcastryc/](https://homes.esat.kuleuven.be/~wcastryc/).
+Attempt at a SageMath implementation of [An efficient key recovery attack on SIDH, with Thomas Decru, preliminary version](https://eprint.iacr.org/2022/975.pdf), based on supplied Magma code from [https://homes.esat.kuleuven.be/~wcastryc/](https://homes.esat.kuleuven.be/~wcastryc/).
 
 ## Where we at?
 
