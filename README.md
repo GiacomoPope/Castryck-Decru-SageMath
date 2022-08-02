@@ -34,21 +34,8 @@ A similar piece of code using SageMath would be:
 A4.<U0, U1, V0, V1> = AffineSpace(Fp2, 4)
 V = A4.subscheme([eq1, eq2, eq3, eq4, eq5])
 
-# # point with zero coordinates probably correspond to "extra" solutions, we should be left with 4 sols
-# # (code may fail over small fields)
-
-# from sage.matrix.matrix2 import Matrix 
-# def resultant(f1, f2, var):
-#     return Matrix.determinant(f1.sylvester_matrix(f2, var))
-
-# tmp1 = resultant(eq3,  eq4, U0)
-# print(tmp1)
-# tmp2 = resultant(tmp1, eq5, V0)
-# print(tmp2)  
-# tmp3 = resultant(tmp2, eq1, V0)
-# print(tmp3)  
-# tmp4 = resultant(tmp3, eq2, V1)
-# print(tmp4)
+# point with zero coordinates probably correspond to "extra" solutions, we should be left with 4 sols
+# (code may fail over small fields)
 
 realsols = []
 for D in V.rational_points():
