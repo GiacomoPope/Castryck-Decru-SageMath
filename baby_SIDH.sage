@@ -262,7 +262,7 @@ for i in range(next_i, b-2):
             skB.append(j)
             break
 
-key = sum(skB[i]*3^(i-1) for i in range(1..b-2))
+key = sum(skB[i-1]*3^(i-1) for i in range(1..b-2))
 
 # bridge last safety gap
 tim2 = time.time()

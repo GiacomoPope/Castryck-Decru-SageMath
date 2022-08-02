@@ -79,11 +79,11 @@ def FromProdToJac(C, E, P_c, Q_c, P, Q, a):
     E4 = E.change_ring(Fp4)
     C4 = C.change_ring(Fp4)
     divP = [(xr, imPcP[1](xr)) for xr, _ in imPcP[0].roots(Fp4)]
-    assert 2*E4(P) == sum(E4(*projE(*pt)) for pt in divP)
-    assert 2*C4(P_c) == sum(C4(*projC(*pt)) for pt in divP)
+    # assert 2*E4(P) == sum(E4(*projE(*pt)) for pt in divP)
+    # assert 2*C4(P_c) == sum(C4(*projC(*pt)) for pt in divP)
     divQ = [(xr, imQcQ[1](xr)) for xr, _ in imQcQ[0].roots(Fp4)]
-    assert 2*E4(Q) == sum(E4(*projE(*pt)) for pt in divQ)
-    assert 2*C4(Q_c) == sum(C4(*projC(*pt)) for pt in divQ)
+    # assert 2*E4(Q) == sum(E4(*projE(*pt)) for pt in divQ)
+    # assert 2*C4(Q_c) == sum(C4(*projC(*pt)) for pt in divQ)
 
     return h, imPcP[0], imPcP[1], imQcQ[0], imQcQ[1]
 
