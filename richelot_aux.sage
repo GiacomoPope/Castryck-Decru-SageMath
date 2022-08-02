@@ -100,8 +100,16 @@ def test_FromProdToJac():
     assert C.order() == 2**122
     a = 61
     Pc, Qc = C.gens()
-    Q, P = E.gens()
+    P, Q = E.gens()
+    wc = Pc.weil_pairing(Qc, 2^a)
+    we = P.weil_pairing(Q, 2^a)
+    # make it an anti-isometry
+    k = we.log(wc)
+    Q = -pow(k, -1, 2^a) * Q
+    assert P.weil_pairing(Q, 2^a) * Pc.weil_pairing(Qc, 2^a) == 1
     return FromProdToJac(C, E, Pc, Qc, P, Q, a)
+
+#test_FromProdToJac()
 
 def FromJacToJac(h, D11, D12, D21, D22, a):
     R = h.parent()
@@ -166,7 +174,9 @@ def FromJacToJac(h, D11, D12, D21, D22, a):
         G1(x22) * H1 * (x22 - x) / y22])
     imD2 = Dnew21 + Dnew22
 
-    return hnew, imD1[0], imD1[1], imD2[0], imD2[1]
+    # Go down to original field
+    R = Fp2[x]
+    return hnew, R(imD1[0]), R(imD1[1]), R(imD2[0]), R(imD2[1])
 
 def test_FromJacToJac():
     print("test_FromJacToJac")
@@ -194,6 +204,25 @@ def Does22ChainSplit(C, E, P_c, Q_c, P, Q, a):
                                Coefficient(G3, 0), Coefficient(G3, 1), Coefficient(G3, 2)])
     delta = delta.determinant();
     return delta == 0
+
+def test_ChainSplit():
+    print("test_ChainSplit")
+    p = 2**61 - 1
+    k = GF(p^2)
+    E = EllipticCurve(k, [-1, 0])
+    C = EllipticCurve(k, [1, 0])
+    a = 61
+    Pc, Qc = C.gens()
+    P, Q = E.gens()
+    wc = Pc.weil_pairing(Qc, 2^a)
+    we = P.weil_pairing(Q, 2^a)
+    # make it an anti-isometry
+    k = we.log(wc)
+    Q = -pow(k, -1, 2^a) * Q
+    assert P.weil_pairing(Q, 2^a) * Pc.weil_pairing(Qc, 2^a) == 1
+    assert not Does22ChainSplit(C, E, Pc, Qc, P, Q, 61)
+
+#test_ChainSplit()
 
 def OddCyclicSumOfSquares(n, factexpl, provide_own_fac):
     return NotImplemented
