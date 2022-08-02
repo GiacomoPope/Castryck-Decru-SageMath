@@ -41,7 +41,7 @@ def FromProdToJac(C, E, P_c, Q_c, P, Q, a):
     H = HyperellipticCurve(h)
     J = H.jacobian()
 
-    # We need the image of (P_c, P) and (Q_c, Q) in J
+    #We need the image of (P_c, P) and (Q_c, Q) in J
     # The image of (P_c, P) is the image of P_c as a divisor on H
     # plus the image of P as a divisor on H.
     # This allows for direct computation without solving equations
@@ -96,8 +96,6 @@ def test_FromProdToJac():
     Pc, Qc = C.gens()
     Q, P = E.gens()
     FromProdToJac(C, E, Pc, Qc, P, Q, a)
-
-#test_FromProdToJac()
 
 def FromJacToJac(h, D11, D12, D21, D22, a):
     R.<x> = h.parent()
@@ -172,9 +170,6 @@ def Does22ChainSplit(C, E, P_c, Q_c, P, Q, a):
     Fp2 = C.base()
     # gluing step
     h, D11, D12, D21, D22 = FromProdToJac(C, E, P_c, Q_c, P, Q, a);
-    # TODO
-    return False
-    # TODO
     print(f"order 2^{a-1} on hyp curve {h}")
     for i in range(1,a-2+1):
         h, D11, D12, D21, D22 = FromJacToJac(h, D11, D12, D21, D22, a-i)
@@ -182,7 +177,7 @@ def Does22ChainSplit(C, E, P_c, Q_c, P, Q, a):
     # now we are left with a quadratic splitting: is it singular?
     G1 = D11
     G2 = D21
-    G3 = h # (G1*G2)
+    G3 = h // (G1*G2)
     print(G1, G2, G3)
 
     delta = Matrix(Fp2, 3, 3, [Coefficient(G1, 0), Coefficient(G1, 1), Coefficient(G1, 2),
