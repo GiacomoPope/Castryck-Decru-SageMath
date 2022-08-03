@@ -114,7 +114,9 @@ def test_FromProdToJac():
 
 #test_FromProdToJac()
 
-def FromJacToJac(h, D11, D12, D21, D22, a):
+def FromJacToJac(h, D11, D12, D21, D22, a, power=None):
+    # power is an optional precomputed tuple (l, 2^l D1, 2^l D2)
+    # where l < a
     R = h.parent()
     Fp2 = R.base()
 
@@ -122,8 +124,25 @@ def FromJacToJac(h, D11, D12, D21, D22, a):
     D1 = J(D11, D12)
     D2 = J(D21, D22)
 
-    G1, _ = 2^(a-1)*(D1)
-    G2, _ = 2^(a-1)*(D2)
+    next_power = None
+    if power is None:
+        # Precompute some power of D1, D2 to save computations later.
+        if a >= 16:
+            _D1 = 2^(a-8)*D1
+            _D2 = 2^(a-8)*D2
+            G1, _ = 2^7 * _D1
+            G2, _ = 2^7 * _D2
+            next_power = (a-8, _D1, _D2)
+        else:
+            G1, _ = 2^(a-1) * D1
+            G2, _ = 2^(a-1) * D2
+    else:
+        (l, _D1, _D2) = power
+        if l < a-1 and a >= 16:
+            next_power = power
+        G1, _ = 2^(a-1-l)*J(*_D1)
+        G2, _ = 2^(a-1-l)*J(*_D2)
+
     #assert 2^a*D1 == 0
     #assert 2^a*D2 == 0
     G3, r3 = h.quo_rem(G1 * G2)
@@ -209,7 +228,10 @@ def FromJacToJac(h, D11, D12, D21, D22, a):
 
     imD1 = image(D1)
     imD2 = image(D2)
-    return hnew, imD1[0], imD1[1], imD2[0], imD2[1]
+    if next_power:
+        l, _D1, _D2 = next_power
+        next_power = (l, image(_D1), image(_D2))
+    return hnew, imD1[0], imD1[1], imD2[0], imD2[1], next_power
 
 def test_FromJacToJac():
     print("test_FromJacToJac")
@@ -222,9 +244,10 @@ def Does22ChainSplit(C, E, P_c, Q_c, P, Q, a):
     Fp2 = C.base()
     # gluing step
     h, D11, D12, D21, D22 = FromProdToJac(C, E, P_c, Q_c, P, Q, a);
+    next_power = None
     # print(f"order 2^{a-1} on hyp curve {h}")
     for i in range(1,a-2+1):
-        h, D11, D12, D21, D22 = FromJacToJac(h, D11, D12, D21, D22, a-i)
+        h, D11, D12, D21, D22, next_power = FromJacToJac(h, D11, D12, D21, D22, a-i, power=next_power)
         # print(f"order 2^{a - i - 1} on hyp curve {h}")
     # now we are left with a quadratic splitting: is it singular?
     G1 = D11
