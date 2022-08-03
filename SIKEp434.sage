@@ -3,6 +3,7 @@ from itertools import product
 
 load('richelot_aux.sage')
 load('uvtable.sage')
+load('speedup.sage')
 set_verbose(-1)
 
 SIKE_parameters {
