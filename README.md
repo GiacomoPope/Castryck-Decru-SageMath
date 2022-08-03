@@ -44,6 +44,8 @@ Fp2.<i> = GF(p^2, modulus=x^2+1)
 type(Fp2).vector_space = sage.misc.cachefunc.cached_method(type(Fp2).vector_space)
 ```
 
+This speed up is included by default through loading in the file `speedup.sage` for each of the attack files.
+
 Included below are some estimated times for running the scripts with and without various patches.
 
 ### Breaking SIDH on a Laptop
