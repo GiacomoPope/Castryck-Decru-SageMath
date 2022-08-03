@@ -4,6 +4,8 @@ from itertools import product
 load('richelot_aux.sage')
 load('uvtable.sage')
 load('speedup.sage')
+
+# Remove annoying messages about slow Gröbner
 set_verbose(-1)
 
 SIKE_parameters {
@@ -18,6 +20,7 @@ a, b = SIKE_parameters["SIKEp434"]
 p = 2^a*3^b - 1
 Fp2.<i> = GF(p^2, modulus=x^2+1)
 assert i^2 == -1
+
 R.<x> = PolynomialRing(Fp2)
 
 E_start = EllipticCurve(Fp2, [0,6,0,1,0])
@@ -64,9 +67,7 @@ QB = Q2
 for c in chain:
     QB = c(QB)
 
-skB = [] # DIGITS IN EXPANSION OF BOB'S SECRET KEY
 print(f"If all goes well then the following digits should be found: {Integer(Bobskey).digits(base=3)}")
-
 
 # ===================================
 # =====  ATTACK  ====================

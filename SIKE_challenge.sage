@@ -4,14 +4,20 @@ from itertools import product
 load('richelot_aux.sage')
 load('uvtable.sage')
 load('speedup.sage')
+
+# Remove annoying messages about slow Gröbner
 set_verbose(-1)
 
+# Stop slow primality checks GF(p^k) construction
+proof.arithmetic(False)
+
+# $IKEp217 parameters
 a = 110
 b = 67
-
 p = 2^a*3^b - 1
 Fp2.<i> = GF(p^2, modulus=x^2+1)
 assert i^2 == -1
+
 R.<x> = PolynomialRing(Fp2)
 
 E_start = EllipticCurve(Fp2, [0,6,0,1,0])
@@ -28,6 +34,8 @@ for iota in E1728.automorphisms():
     if iota(iota(P)) == -P:
         two_i = phi.post_compose(iota).post_compose(phi.dual())
         break
+
+# $IKEp217 public parameters
 
 xQ2 = 86445170414599058485968715662346922796016566052081315743781191908 + i*40452781127453632342062231901634407992350274206219311799642330230
 yQ2 = 65598021239445364766945421641383356785387864046503211101901536990 + i*4185188043442820950612067662642469583838730096408235972690714750
