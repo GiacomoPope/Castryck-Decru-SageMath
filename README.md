@@ -51,8 +51,8 @@ Included below are some estimated times for running the scripts with and without
 |                       | Vanilla :icecream: | No Proof :sleeping: | Monkey Patch :monkey_face: | Sage Patch 🩹 |
 |-----------------------|:------------------:|------------|:--------------------------:|:-----------:|
 | Baby SIDH (`SIKEp64`) | 30 seconds         | 30 seconds | 30 seconds                 | 30 seconds  |
-| `$IKEp217` Challenge  |          -         | 30 Minutes | 15 minutes                 | 15 minutes  |
-| `SIKEp434`            |          -         |      -     |              -             | 1.5 Hours   |
+| `$IKEp217` Challenge  |          -         | 30 minutes | 15 minutes                 | 15 minutes  |
+| `SIKEp434`            |          -         |      -     |              -             | 1.5 hours   |
 | `SIKEp503`            |          -         |      -     |              -             |      -      |
 | `SIKEp610`            |          -         |      -     |              -             |      -      |
 | `SIKEp751`            |          -         |      -     |              -             |      -      |
