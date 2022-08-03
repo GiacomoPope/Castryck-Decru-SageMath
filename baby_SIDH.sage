@@ -3,12 +3,10 @@ from itertools import product
 
 load('richelot_aux.sage')
 load('uvtable.sage')
+load('speedup.sage')
 
 # Remove annoying messages about slow Gröbner
 set_verbose(-1)
-
-# Stop slow primality checks GF(p^k) construction
-proof.arithmetic(False)
 
 # Small values of a,b such that:
 # p is prime and
@@ -19,9 +17,6 @@ b = 19
 p = 2^a*3^b - 1
 Fp2.<i> = GF(p^2, modulus=x^2+1)
 assert i^2 == -1
-# Cache the vector space so we dont have to re-construct it for
-# every coefficent of the Jacobian when performing group operations
-type(Fp2).vector_space = sage.misc.cachefunc.cached_method(type(Fp2).vector_space)
 
 R.<x> = PolynomialRing(Fp2)
 
