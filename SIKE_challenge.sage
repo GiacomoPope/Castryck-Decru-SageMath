@@ -14,9 +14,13 @@ assert i^2 == -1
 R.<x> = PolynomialRing(Fp2)
 
 E_start = EllipticCurve(Fp2, [0,6,0,1,0])
+# Speeds things up in Sage
+E_start.set_order((p+1)^2)
 
 phi = EllipticCurveIsogeny(E_start, x)
 E1728 = phi.codomain()
+# Speeds things up in Sage
+E1728.set_order((p+1)^2)
 
 for iota in E1728.automorphisms():
     P = E1728.random_point()
@@ -65,6 +69,7 @@ if xRA + xQA + xPA + A != (yQA + yPA)^2 / (xQA - xPA)^2:
 
 # let's check:
 EA = EllipticCurve(Fp2, [0,A,0,1,0])
+EA.set_order((p+1)^2)
 PA = EA(xPA, yPA)
 QA = EA(xQA, yQA)
 
@@ -84,6 +89,7 @@ if xRB + xQB + xPB + B != (yQB + yPB)^2 / (xQB - xPB)^2:
 
 # let's check:
 EB = EllipticCurve(Fp2, [0,B,0,1,0])
+EB.set_order((p+1)^2)
 PB = EB(xPB, yPB)
 QB = EB(xQB, yQB)
 
@@ -240,7 +246,7 @@ for i in range(next_i, b-2):
         prolong += 1
 
     print(f"Determination of the {i}th ternary digit. We are working with 2^{ai}-torsion.")
-    print(f"Prolonging with {prolong} steps.")
+    print(f"Prolonging with {prolong} steps. Current: {skB}")
     endPB = PB
     endQB = QB
     endEB = EB
