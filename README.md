@@ -2,6 +2,8 @@
 
 SageMath implementation of [An efficient key recovery attack on SIDH, with Thomas Decru, preliminary version](https://eprint.iacr.org/2022/975.pdf), based on supplied Magma code from [https://homes.esat.kuleuven.be/~wcastryc/](https://homes.esat.kuleuven.be/~wcastryc/).
 
+**Sage version**: This was written using SageMath 9.5, and works on the latest stable version: 9.6. I have been told that it doesn't work for 9.2 and below.
+
 ## Deviation from Castryck-Decru Attack
 
 **TODO: Further explaination**
