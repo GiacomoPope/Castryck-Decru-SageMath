@@ -131,7 +131,6 @@ for j in product([0,1,2], repeat=int(bet1)):
 
 print(skB)
 
-
 # now compute longest prolongation of Bob's isogeny that may be needed
 length = 1
 max_length = 0

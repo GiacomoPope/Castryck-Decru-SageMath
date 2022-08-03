@@ -17,13 +17,13 @@ Thanks to [Rémy Oudompheng](https://twitter.com/oudomphe) for deriving and impl
 
 ## Baby Example
 
-SageMath is significantly slower than Magma for Hyperelliptic computations, and so running the attack on SIKE parameters is still slow. To show the attack working we include `baby_SIDH.sage` which has a smaller prime $p = 2^{33}\*3^{19} - 1$. 
+During development of the code, we created a weaker parameter set `SIKEp64` with $p = 2^{33}\*3^{19} - 1$. This has the benefit of helping debug our implementation while also giving instant gratification of seeing an attack in real time.
 
 Running `sage baby_SIDH.sage` on a laptop recovers Bob's private key in less than one minute.
 
 ## Performance
 
-There is a SageMath performance issue with the group law for the Jacobian of a hyperelliptic curve. When testing equality, the code invokes `GF(p^k)(...)` for all coefficients. The constructor of the Finite Field includes a primality test for ever call, which for larger primes is incredibly expensive.
+There is a SageMath performance issue with the group law for the Jacobian of a hyperelliptic curve. When testing equality, the code invokes `GF(p^k)(...)` for all coefficients. The constructor of the Finite Field includes a primality test for every call, which for larger primes is incredibly expensive.
 
 Rémy managed to avoid this by patching SageMath itself, modifying `sage.categories.fields` so that the vector space is cached:
 
