@@ -8,7 +8,7 @@ load('speedup.sage')
 # Remove annoying messages about slow Gröbner
 set_verbose(-1)
 
-SIKE_parameters {
+SIKE_parameters = {
     "SIKEp434" : (216, 137),
     "SIKEp503" : (250, 159),
     "SIKEp610" : (305, 192),
