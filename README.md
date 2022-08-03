@@ -49,7 +49,7 @@ Included below are some estimated times for running the scripts with and without
 ### Breaking SIDH on a Laptop
 
 |                       | Vanilla :icecream: | No Proof :sleeping: | Monkey Patch :monkey_face: | Sage Patch 🩹 |
-|-----------------------|:------------------:|---------------------|:--------------------------:|:-------------:|
+|-----------------------|:------------------:|:-------------------:|:--------------------------:|:-------------:|
 | Baby SIDH (`SIKEp64`) | 30 seconds         | 30 seconds          | 30 seconds                 | 30 seconds    |
 | `$IKEp217` Challenge  |          -         | 30 minutes          | 15 minutes                 | 15 minutes    |
 | `SIKEp434`            |          -         |          -          |              -             | 1.5 hours     |
