@@ -54,7 +54,7 @@ Included below are some estimated times for running the scripts with and without
 |-----------------------|:------------------:|:-------------------:|:--------------------------:|:-------------:|
 | Baby SIDH (`SIKEp64`) | 1 minute           | 1 minute            | 1 minute                   | 1 minute      |
 | `$IKEp217` Challenge  |          -         | 30 minutes          | 15 minutes                 | 15 minutes    |
-| `SIKEp434`            |          -         |          -          |              -             | 1.5 hours     |
+| `SIKEp434`            |          -         |          -          | 1.5 hours                  | 1.5 hours     |
 | `SIKEp503`            |          -         |          -          |              -             |       -       |
 | `SIKEp610`            |          -         |          -          |              -             |       -       |
 | `SIKEp751`            |          -         |          -          |              -             |       -       |
@@ -69,7 +69,7 @@ Included below are some estimated times for running the scripts with and without
     * Modify line 18: `a, b = SIKE_parameters["SIKEp503"]` for an attack against `SIKEp503`
     * Modify line 18: `a, b = SIKE_parameters["SIKEp610"]` for an attack against `SIKEp610`
     * Modify line 18: `a, b = SIKE_parameters["SIKEp751"]` for an attack against `SIKEp751`
-    
+
 ## Conversion Progress
 
 ### Magma files to convert
