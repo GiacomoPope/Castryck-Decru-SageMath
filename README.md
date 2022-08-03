@@ -55,7 +55,7 @@ Included below are some estimated times for running the scripts with and without
 | Baby SIDH (`SIKEp64`) | 1 minute           | 1 minute            | 1 minute                   | 1 minute      |
 | `$IKEp217` Challenge  |          -         | 30 minutes          | 15 minutes                 | 15 minutes    |
 | `SIKEp434`            |          -         |          -          | 1.5 hours                  | 1.5 hours     |
-| `SIKEp503`            |          -         |          -          |              -             |       -       |
+| `SIKEp503`            |          -         |          -          | 3.5 hours                  |       -       |
 | `SIKEp610`            |          -         |          -          |              -             |       -       |
 | `SIKEp751`            |          -         |          -          |              -             |       -       |
 
