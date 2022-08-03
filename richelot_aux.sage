@@ -116,10 +116,9 @@ def test_FromProdToJac():
 
 def FromJacToJac(h, D11, D12, D21, D22, a):
     R = h.parent()
-    x = R.gens()[0]
     Fp2 = R.base()
 
-    J = Jacobian(HyperellipticCurve(h))
+    J = HyperellipticCurve(h).jacobian()
     D1 = J(D11, D12)
     D2 = J(D21, D22)
 
@@ -140,7 +139,6 @@ def FromJacToJac(h, D11, D12, D21, D22, a):
     H3 = delta*(derivative(G1)*G2 - G1*derivative(G2))
 
     hnew = H1*H2*H3
-    Jnew = Jacobian(HyperellipticCurve(hnew))
 
     # Now compute image points: Richelot isogeny is defined by the degree 2
     # correspondence:
@@ -151,47 +149,63 @@ def FromJacToJac(h, D11, D12, D21, D22, a):
     def image(D):
         # Let x^2 + u1 x + u0 = U(x) = 0
         #     y =   v1 x + v0
-        # be a divisor
-
-        # Perform manually-assisted elimination:
-        U = D[0]
+        # be Mumford cordinates of D.
+        # Introduce formal coordinates xa, xb for the roots of U.
+        # We should compute the image of (xa, ya) and (xb, yb) through
+        # the correspondance.
+        U, V = D
+        u1, u0 = U[1], U[0]
         assert U[2] == 1
-        I = R2.ideal((xa + xb + U[1], xa * xb - U[0]))
+        # Perform manually-assisted elimination:
         # Compute g1 % U and g2 % U
         #    (g11 x1a + g10) h1(x2) + (g21 x1a + g20) h2(x2) = 0
         # OR (g11 x1b + g10) h1(x2) + (g21 x1b + g20) h2(x2) = 0
-        # where x1a and x1b are the roots of U.
-        # Multiply and substitute sum/product of roots.
+        # Multiply these equations:
         G1red = G1 % U
         G2red = G2 % U
         Qx = (G1red.subs(x=xa) * H1 + G2red.subs(x=xa) * H2) * \
              (G1red.subs(x=xb) * H1 + G2red.subs(x=xb) * H2)
-        Px = R(I.reduce(Qx))
-        Px = Px / Px.lc()
+        # This is a polynomial in:
+        # xa*xb = u0
+        # xa + xb = -u1
+        Px = u0 * Qx.coefficient({xa: 1, xb: 1}) \
+           - u1 * Qx.coefficient({xa: 1, xb: 0}) \
+           + Qx.coefficient({xa: 0, xb: 0})
+        Px = Px.univariate_polynomial()
 
         # Similarly
         #    (v1 x1a + v0) y2 = (g11 x1a + g10) h1(x2) (x1a - x2)
         # OR (v1 x1b + v0) y2 = (g11 x1b + g10) h1(x2) (x1b - x2)
         # Multiply and reduce:
-        # * x1a+x1b, x1a*x1b => -u1, u0
-        # * y2^2 => h(y2)
-        # * Px => 0
-        # We have now y2 * A(x) - B(x) = 0
-        # Now invert A modulo Px to get y = (A^-1 B)(x)
-        V = D[1]
-        G1red = G1 % U
         Qy = (V(xa) * y - G1red(xa) * H1 * (xa - x)) * \
              (V(xb) * y - G1red(xb) * H1 * (xb - x))
-        J = R2.ideal((xa + xb + U[1], xa * xb - U[0]))
-        Py = J.reduce(Qy)
-        Py = R2.ideal(y*y - hnew).reduce(Py)
-        assert Py.degree(y) == 1
-        A = Py.coefficient(y)
-        B = Py.coefficient({x: None, y: 0})
-        assert Py == A*y+B
-        _, Ainv, _ = R(A).xgcd(Px)
-        Py = R(- Ainv * B) % Px
-        return Jnew((Px, Py))
+        # Reduce symmetric functions:
+        # xa^2 xb^2 = u0^2
+        # xa^2 xb + xa xb^2 = -u0*u1
+        # xa^2 + xb^2 = u1**2 - 2*u0
+        # etc.
+        Py = u0^2 * Qy.coefficient({xa: 2, xb: 2}) \
+           - u0 * u1 * Qy.coefficient({xa: 2, xb: 1}) \
+           + (u1**2 - 2*u0) * Qy.coefficient({xa: 2, xb: 0}) \
+           + u0 * Qy.coefficient({xa: 1, xb: 1}) \
+           - u1 * Qy.coefficient({xa: 1, xb: 0}) \
+           + Qy.coefficient({xa: 0, xb: 0})
+        # Py = A y^2 + B y + C
+        #    = B y + (A hnew + C) = 0
+        A = Py.coefficient({y: 2})
+        assert A.is_constant()
+        A = A.constant_coefficient()
+        B = Py.coefficient({y: 1}).univariate_polynomial()
+        C = Py.coefficient({y: 0}).univariate_polynomial()
+
+        _, Binv, _ = B.xgcd(Px)
+        Py = (- Binv * (A * hnew + C)) % Px
+
+        # Inlined Cantor reduction
+        # Px has degree 4, Py has degree 3
+        Dx = ((hnew - Py ** 2) // Px).monic()
+        Dy = (-Py) % Dx
+        return (Dx, Dy)
 
     imD1 = image(D1)
     imD2 = image(D2)
