@@ -83,6 +83,6 @@ Included below are some estimated times for running the scripts with and without
 - [x] Fill `expdata` data table from `uvtable.sage`
 - [x] Compute the first bits using `Glue-and-split`
 - [x] Compute longest prolongation of Bob's isogeny
-- [x] Compute next digit (Partial progress)
+- [x] Compute next digit
 - [x] Compute all digits except last 3
 - [x] Find last three digits
