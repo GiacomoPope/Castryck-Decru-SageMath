@@ -1,3 +1,5 @@
+set_verbose(-1)
+
 def Coefficient(h, n):
     """
     Helper function to make things look similar!
@@ -123,8 +125,8 @@ def FromJacToJac(h, D11, D12, D21, D22, a):
 
     G1, _ = 2^(a-1)*(D1)
     G2, _ = 2^(a-1)*(D2)
-    assert 2^a*D1 == 0
-    assert 2^a*D2 == 0
+    #assert 2^a*D1 == 0
+    #assert 2^a*D2 == 0
     G3, r3 = h.quo_rem(G1 * G2)
     assert r3 == 0
 
@@ -145,40 +147,55 @@ def FromJacToJac(h, D11, D12, D21, D22, a):
     # g1(x1) h1(x2) + g2(x1) h2(x2) = 0
     # or y1 y2 = g1(x1) h1(x2) (x1 - x2)
 
-    # In general Jacobian points over k will define curve points in a quadratic
-    # extension:
-    Fp4 = Fp2.extension(2)
-    R4 = Fp4[x]
-    # Convert D1 to a divisor
-    # FIXME: account for multiplicities
-    Div1 = [(xr, D12(xr)) for xr, _ in D11.roots(Fp4)]
-    assert len(Div1) == 2
-    # Each point of the divisor defines a divisor on Hnew
-    # Use formulas above to get the Mumford coordinates.
-    (x11, y11), (x12, y12) = Div1
-    Dnew11 = Jnew([
-        G1(x11) * R4(H1) + G2(x11) * R4(H2),
-        G1(x11) * R4(H1) * (x11 - R4(x)) / y11])
-    Dnew12 = Jnew([
-        G1(x12) * R4(H1) + G2(x12) * R4(H2),
-        G1(x12) * R4(H1) * (x12 - R4(x)) / y12])
-    imD1 = Dnew11 + Dnew12
+    R2.<y,x,xa,xb> = PolynomialRing(Fp2, order="lex")
+    def image(D):
+        # Let x^2 + u1 x + u0 = U(x) = 0
+        #     y =   v1 x + v0
+        # be a divisor
 
-    # And D2
-    Div2 = [(xr, D22(xr)) for xr, _ in D21.roots(Fp4)]
-    assert len(Div2) == 2
-    (x21, y21), (x22, y22) = Div2
-    Dnew21 = Jnew([
-        G1(x21) * R4(H1) + G2(x21) * R4(H2),
-        G1(x21) * R4(H1) * (x21 - R4(x)) / y21])
-    Dnew22 = Jnew([
-        G1(x22) * R4(H1) + G2(x22) * R4(H2),
-       G1(x22) * R4(H1) * (x22 - R4(x)) / y22])
-    imD2 = Dnew21 + Dnew22
+        # Perform manually-assisted elimination:
+        U = D[0]
+        assert U[2] == 1
+        I = R2.ideal((xa + xb + U[1], xa * xb - U[0]))
+        # Compute g1 % U and g2 % U
+        #    (g11 x1a + g10) h1(x2) + (g21 x1a + g20) h2(x2) = 0
+        # OR (g11 x1b + g10) h1(x2) + (g21 x1b + g20) h2(x2) = 0
+        # where x1a and x1b are the roots of U.
+        # Multiply and substitute sum/product of roots.
+        G1red = G1 % U
+        G2red = G2 % U
+        Qx = (G1red.subs(x=xa) * H1 + G2red.subs(x=xa) * H2) * \
+             (G1red.subs(x=xb) * H1 + G2red.subs(x=xb) * H2)
+        Px = R(I.reduce(Qx))
+        Px = Px / Px.lc()
 
-    # Go down to original field
-    R = Fp2[x]
-    return hnew, R(imD1[0]), R(imD1[1]), R(imD2[0]), R(imD2[1])
+        # Similarly
+        #    (v1 x1a + v0) y2 = (g11 x1a + g10) h1(x2) (x1a - x2)
+        # OR (v1 x1b + v0) y2 = (g11 x1b + g10) h1(x2) (x1b - x2)
+        # Multiply and reduce:
+        # * x1a+x1b, x1a*x1b => -u1, u0
+        # * y2^2 => h(y2)
+        # * Px => 0
+        # We have now y2 * A(x) - B(x) = 0
+        # Now invert A modulo Px to get y = (A^-1 B)(x)
+        V = D[1]
+        G1red = G1 % U
+        Qy = (V(xa) * y - G1red(xa) * H1 * (xa - x)) * \
+             (V(xb) * y - G1red(xb) * H1 * (xb - x))
+        J = R2.ideal((xa + xb + U[1], xa * xb - U[0]))
+        Py = J.reduce(Qy)
+        Py = R2.ideal(y*y - hnew).reduce(Py)
+        assert Py.degree(y) == 1
+        A = Py.coefficient(y)
+        B = Py.coefficient({x: None, y: 0})
+        assert Py == A*y+B
+        _, Ainv, _ = R(A).xgcd(Px)
+        Py = R(- Ainv * B) % Px
+        return Jnew((Px, Py))
+
+    imD1 = image(D1)
+    imD2 = image(D2)
+    return hnew, imD1[0], imD1[1], imD2[0], imD2[1]
 
 def test_FromJacToJac():
     print("test_FromJacToJac")
