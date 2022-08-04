@@ -127,12 +127,14 @@ def FromJacToJac(h, D11, D12, D21, D22, a, power=None):
     next_power = None
     if power is None:
         # Precompute some power of D1, D2 to save computations later.
+        # We are going to perform O(a^1.5) squarings instead of O(a^2)
         if a >= 16:
-            _D1 = 2^(a-8)*D1
-            _D2 = 2^(a-8)*D2
-            G1, _ = 2^7 * _D1
-            G2, _ = 2^7 * _D2
-            next_power = (a-8, _D1, _D2)
+            gap = Integer(2*a).isqrt()
+            _D1 = 2^(a-gap)*D1
+            _D2 = 2^(a-gap)*D2
+            G1, _ = 2^(gap-1) * _D1
+            G2, _ = 2^(gap-1) * _D2
+            next_power = (a-gap, _D1, _D2)
         else:
             G1, _ = 2^(a-1) * D1
             G2, _ = 2^(a-1) * D2
