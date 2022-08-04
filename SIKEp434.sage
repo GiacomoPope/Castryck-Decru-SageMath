@@ -15,7 +15,11 @@ SIKE_parameters = {
     "SIKEp751" : (372, 239)
 }
 
-a, b = SIKE_parameters["SIKEp434"]
+# Change me to attack different parameter sets
+NIST_submission = "SIKEp434"
+a, b = SIKE_parameters[NIST_submission]
+
+print(f"Running the attack against {NIST_submission} parameters, which has a prime: 2^{a}*3^{b} - 1")
 
 p = 2^a*3^b - 1
 Fp2.<i> = GF(p^2, modulus=x^2+1)

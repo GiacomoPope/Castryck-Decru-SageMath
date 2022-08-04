@@ -65,10 +65,10 @@ Included below are some estimated times for running the scripts with and without
 * To run the attack on the baby parameters, run `sage baby_SIDH.sage`
 * To run the attack on the Microsoft `$IKEp217` challenge, run `sage SIKE_challenge.sage`
 * To run the attack on the parameters submitted to the NIST PQ competition:
-    * Default: `a, b = SIKE_parameters["SIKEp434"]`. Simply run `sage SIKEp434.sage` for an attack on `SIKEp434`.
-    * Modify line 18: `a, b = SIKE_parameters["SIKEp503"]` for an attack against `SIKEp503`
-    * Modify line 18: `a, b = SIKE_parameters["SIKEp610"]` for an attack against `SIKEp610`
-    * Modify line 18: `a, b = SIKE_parameters["SIKEp751"]` for an attack against `SIKEp751`
+    * Default: `NIST_submission = "SIKEp434"`. Simply run `sage SIKEp434.sage` for an attack on `SIKEp434`.
+    * Modify line 19: `NIST_submission = "SIKEp503"` for an attack against `SIKEp503`
+    * Modify line 19: `NIST_submission = "SIKEp610"` for an attack against `SIKEp610`
+    * Modify line 19: `NIST_submission = "SIKEp751"` for an attack against `SIKEp751`
 
 ## Conversion Progress
 
