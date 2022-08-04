@@ -34,13 +34,14 @@ check_torsion_points(E_start, a, b, P2, Q2, P3, Q3)
 
 # Generate Bob's key pair
 bob_private_key, EB, PB, QB = gen_bob_keypair(E_start, P2, Q2, P3, Q3)
+solution = Integer(bob_private_key).digits(base=3)
 
-print(f"If all goes well then the following digits should be found: {Integer(bob_private_key).digits(base=3)}")
+print(f"If all goes well then the following digits should be found: {solution}")
 
 # ===================================
 # =====  ATTACK  ====================
 # ===================================
-recovered_key = CastryckDecruAttack(E_start, P2, Q2, EB, PB, QB, two_i)
+recovered_key = CastryckDecruAttack(E_start, P2, Q2, EB, PB, QB, two_i, solution)
 
 
 

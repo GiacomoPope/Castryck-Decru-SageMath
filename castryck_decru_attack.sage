@@ -12,8 +12,24 @@ set_verbose(-1)
 # =====  ATTACK  ====================
 # ===================================
 
-def CastryckDecruAttack(E_start, P2, Q2, EB, PB, QB, two_i):
+def check_progress(solution, skB, tim):
+    """
+    There is currently a bug in which sometimes the
+    wrong digit is calculated. When this happens, the
+    whole algorithm runs till the end before failing
 
+    We include a cheat-test on each digit so we can exit 
+    earlier whenever we know the secret (such as in 
+    baby SIDH or in the SIKEp434 file)
+    """
+    if skB != solution[:len(skB)]:
+        print(f"The last digited calculated is incorrect.")
+        print(f"Expected: {solution[:len(skB)]}")
+        print(f"Computed: {skB}")
+        print(f"Altogether this took {time.time() - tim} seconds.")
+        exit()
+
+def CastryckDecruAttack(E_start, P2, Q2, EB, PB, QB, two_i, solution=None):
     tim = time.time()
 
     skB = [] # TERNARY DIGITS IN EXPANSION OF BOB'S SECRET KEY
@@ -48,13 +64,13 @@ def CastryckDecruAttack(E_start, P2, Q2, EB, PB, QB, two_i):
     alp = a - ai
 
     # for j in CartesianPower([0,1,2], bet1) do
-    for j in product([0,1,2], repeat=int(bet1)):
-        print(f"Testing digits: {[j[k] for k in range(bet1)]}")
+    for first_digits in product([0,1,2], repeat=int(bet1)):
+        print(f"Testing digits: {[first_digits[k] for k in range(bet1)]}")
 
         # tauhatkernel = 3^bi*P3 + sum([3^(k-1)*j[k-1] for k in range(1,beta+1)])*3^bi*Q3
         tauhatkernel = 3^bi*P3 
         for k in range(1, bet1+1):
-            tauhatkernel += (3^(k-1)*j[k-1])*3^bi*Q3
+            tauhatkernel += (3^(k-1)*first_digits[k-1])*3^bi*Q3
 
         tauhatkernel_distort = u*tauhatkernel + v*two_i(tauhatkernel)
 
@@ -68,13 +84,13 @@ def CastryckDecruAttack(E_start, P2, Q2, EB, PB, QB, two_i):
             Q_c = taut(Q_c)
 
         # if j eq <2 : k in [1..bet1]> or Does22ChainSplit(C, EB, 2^alp*P_c, 2^alp*Q_c, 2^alp*PB, 2^alp*QB, ai) then
-        if j == (2,)*bet1 or Does22ChainSplit(C, EB, 2^alp*P_c, 2^alp*Q_c, 2^alp*PB, 2^alp*QB, ai):
+        if first_digits == (2,)*bet1 or Does22ChainSplit(C, EB, 2^alp*P_c, 2^alp*Q_c, 2^alp*PB, 2^alp*QB, ai):
             print("Glue-and-split! These are most likely the secret digits.")
-            for k in j:
-                skB.append(k)
+            skB += first_digits
             break
 
     print(skB)
+    if solution: check_progress(solution, skB, tim)
 
     # now compute longest prolongation of Bob's isogeny that may be needed
     length = 1
@@ -114,7 +130,7 @@ def CastryckDecruAttack(E_start, P2, Q2, EB, PB, QB, two_i):
 
     positives = []
 
-    for j in range(0,2+1):
+    for j in range(0,3):
         print(f"Testing digit: {j}")
         # tauhatkernel := 3^bi*P3 + (&+[3^(k-1)*skB[k] : k in [1..i-1]] + 3^(i-1)*j)*3^bi*Q3;
         tauhatkernel = 3^bi*P3 
@@ -140,6 +156,8 @@ def CastryckDecruAttack(E_start, P2, Q2, EB, PB, QB, two_i):
     if len(positives) == 1:
         print(f"Most likely good prolongation and the secret digit is: {positives[0]}")
         skB.append(positives[0])
+        if solution: check_progress(solution, skB, tim)
+        print(skB)
         next_i = i + 1
     else:
         print("All glue-and-splits, must be bad prolongation: changing it and redoing this digit.")
@@ -197,6 +215,8 @@ def CastryckDecruAttack(E_start, P2, Q2, EB, PB, QB, two_i):
             if j == 2 or Does22ChainSplit(C, endEB, 2^alp*P_c, 2^alp*Q_c, 2^alp*endPB, 2^alp*endQB, ai):
                 print("Glue-and-split! This is most likely the secret digit.")
                 skB.append(j)
+                if solution: check_progress(solution, skB, tim)
+                print(skB)
                 break
 
     key = sum([skB[i-1]*3^(i-1) for i in range(1,b-2)])
