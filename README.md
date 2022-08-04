@@ -4,6 +4,59 @@ SageMath implementation of [An efficient key recovery attack on SIDH, with Thoma
 
 **Sage version**: This was written using SageMath 9.5, and works on the latest stable version: 9.6. I have been told that it doesn't work for 9.2 and below.
 
+## Baby Example
+
+During development of the code, we created a weaker parameter set `SIKEp64` with $p = 2^{33}\*3^{19} - 1$. This has the benefit of helping debug our implementation while also giving instant gratification of seeing an attack in real time.
+
+Running `sage baby_SIDH.sage` on a laptop recovers Bob's private key in less than one minute.
+
+## Breaking SIDH on a Laptop
+
+|                          | `SIKEp64`  | `$IKEp217` | `SIKEp434` | `SIKEp503` | `SIKEp610` | `SIKEp751` |
+|--------------------------|------------|------------|------------|:----------:|------------|:----------:|
+| Approximate Running Time | 30 seconds | 5 minutes  | 30 minutes | 45 minutes | 1.5 hours  | -          |
+
+
+**Note**: Especially for the higher NIST levels, a lot of time is spent getting the first digits, and so performance time varies based on wether or not the first few values are `0` (fastest) or `2` (slowest).
+
+### Parameter choice
+
+* To run the attack on the baby parameters, run `sage baby_SIDH.sage`
+* To run the attack on the Microsoft `$IKEp217` challenge, run `sage SIKE_challenge.sage`
+* To run the attack on the parameters submitted to the NIST PQ competition:
+    * Default: `NIST_submission = "SIKEp434"`. Simply run `sage SIKEp434.sage` for an attack on `SIKEp434`.
+    * Modify line 12: `NIST_submission = "SIKEp503"` for an attack against `SIKEp503`
+    * Modify line 12: `NIST_submission = "SIKEp610"` for an attack against `SIKEp610`
+    * Modify line 12: `NIST_submission = "SIKEp751"` for an attack against `SIKEp751`
+
+## Estimating the running time
+
+We can estimate an average running time from the expected number of calls to the oracle `Does22ChainSplit()`. 
+
+* For the first $\beta_1$ digits, we have to run at most $3^{\beta_1}$ calls to `Does22ChainSplit()` and half this on average
+* For the remaining $b - \beta_1$ digits we will call `Does22ChainSplit()` once when $j = 0$ and twice when $j = 1,2$. We can then expect on average to call the oracle once a third of the time and twice for the rest
+* Expressing the cost of a single call as $c$ we can estimate the total cost as:
+
+$$
+\textsf{Cost} = c \cdot \frac{3^{\beta_1}}{2} + c \cdot \frac{(b - \beta_1)}{3} + 2c \cdot \frac{2(b - \beta_1)}{3}
+$$
+
+$$
+\textsf{Cost} = c \left(\frac{3^{\beta_1}}{2} + \frac{4(b - \beta_1)}{3} \right)
+$$
+
+|             | $c$   | $\beta_1$ | Cost       |
+|-------------|-------|-----------|------------|
+| `SIKEp64`   | 1s    | 2         | 27 seconds |
+| `$IKEp217`  | 4.5s  | 2         | 7 minutes  |
+| `SIKEp434`  | 12s   | 2         | 37 minutes |
+| `SIKEp503`  | 13s   | 4         | 53 minutes |
+| `SIKEp610`  | 19s   | 5         | 2 hours    |
+| `SIKEp751`  | 26s   | 6         | 4.8 hours  |
+
+Where $c$ has been estimated using a MacBook Pro using a 6-Core Intel Core i7 CPU @ 2.6 GHz.
+
+
 ## Deviation from Castryck-Decru Attack
 
 Roughly: points are now directly computed rather than derived by solving equations. This means we can avoid the very slow Grobner basis computation which Sage uses.
@@ -14,21 +67,6 @@ Deviation can be see in the file `richelot_aux.sage` in the functions:
 * `FromJacToJac()`
 
 Thanks to [Rémy Oudompheng](https://twitter.com/oudomphe) for deriving and implementing these algorithms.
-
-## Baby Example
-
-During development of the code, we created a weaker parameter set `SIKEp64` with $p = 2^{33}\*3^{19} - 1$. This has the benefit of helping debug our implementation while also giving instant gratification of seeing an attack in real time.
-
-Running `sage baby_SIDH.sage` on a laptop recovers Bob's private key in less than one minute.
-
-## Laptop Benchmarks
-
-|                          | `SIKEp64`  | `$IKEp217` | `SIKEp434` | `SIKEp503` | `SIKEp610` | `SIKEp751` |
-|--------------------------|------------|------------|------------|:----------:|------------|:----------:|
-| Approximate Running Time | 30 seconds | 5 minutes  | 30 minutes | -          | 1.5 hours  | -          |
-
-
-**Note**: Especially for the higher NIST levels, a lot of time is spent getting the first digits, and so performance time varies based on wether or not the first few values are `0` (fastest) or `2` (slowest).
 
 ## Speeding SageMath up using a cache
 
@@ -57,7 +95,7 @@ This speed up is included by default through loading in the file `speedup.sage` 
 
 Included below are some recorded times for running the scripts with and without various patches, before the `JacToJac()` optimisations which were implemented in pull requests #6-#9. 
 
-### Breaking SIDH on a Laptop
+### Performance estimates with different patches
 
 |                       | Vanilla :icecream: | No Proof :sleeping: | Monkey Patch :monkey_face: | Sage Patch 🩹 |
 |-----------------------|:------------------:|:-------------------:|:--------------------------:|:-------------:|
@@ -68,16 +106,6 @@ Included below are some recorded times for running the scripts with and without 
 | `SIKEp610`            |          -         |          -          |              -             |       -       |
 | `SIKEp751`            |          -         |          -          |              -             |       -       |
 
-
-### Parameter choice
-
-* To run the attack on the baby parameters, run `sage baby_SIDH.sage`
-* To run the attack on the Microsoft `$IKEp217` challenge, run `sage SIKE_challenge.sage`
-* To run the attack on the parameters submitted to the NIST PQ competition:
-    * Default: `NIST_submission = "SIKEp434"`. Simply run `sage SIKEp434.sage` for an attack on `SIKEp434`.
-    * Modify line 12: `NIST_submission = "SIKEp503"` for an attack against `SIKEp503`
-    * Modify line 12: `NIST_submission = "SIKEp610"` for an attack against `SIKEp610`
-    * Modify line 12: `NIST_submission = "SIKEp751"` for an attack against `SIKEp751`
 
 ## Conversion Progress
 
