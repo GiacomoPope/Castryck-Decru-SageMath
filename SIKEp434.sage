@@ -9,7 +9,7 @@ SIKE_parameters = {
 }
 
 # Change me to attack different parameter sets
-NIST_submission = "SIKEp503"
+NIST_submission = "SIKEp434"
 a, b = SIKE_parameters[NIST_submission]
 
 print(f"Running the attack against {NIST_submission} parameters, which has a prime: 2^{a}*3^{b} - 1")
