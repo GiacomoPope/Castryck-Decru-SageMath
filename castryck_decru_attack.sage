@@ -12,7 +12,7 @@ set_verbose(-1)
 # =====  ATTACK  ====================
 # ===================================
 
-def CastryckDecruAttack():
+def CastryckDecruAttack(E_start, P2, Q2, EB, PB, QB, two_i):
 
     tim = time.time()
 

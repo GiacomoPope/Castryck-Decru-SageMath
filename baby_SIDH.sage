@@ -24,10 +24,10 @@ P2, Q2, P3, Q3 = generate_torsion_points(E_start, a, b)
 check_torsion_points(E_start, a, b, P2, Q2, P3, Q3)
 
 # Generate Bob's key pair
-bob_private_key, EB, PB, QB = gen_bob_keypair(E_start, P3, Q3)
+bob_private_key, EB, PB, QB = gen_bob_keypair(E_start, P2, Q2, P3, Q3)
 
 print(f"Running the attack against Baby SIDHp64 parameters, which has a prime: 2^{a}*3^{b} - 1")
 print(f"If all goes well then the following digits should be found: {Integer(bob_private_key).digits(base=3)}")
 
-recovered_key = CastryckDecruAttack()
+recovered_key = CastryckDecruAttack(E_start, P2, Q2, EB, PB, QB, two_i)
 
