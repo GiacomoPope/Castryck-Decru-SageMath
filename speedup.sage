@@ -17,5 +17,9 @@ def _do_speedup():
     # as all types share the same method, by identity
     # Something to be explored later, perhaps :)
     
+    # No use calculating the dimension of HyperElliptic every single time
+    from sage.schemes.projective.projective_subscheme import AlgebraicScheme_subscheme_projective
+    AlgebraicScheme_subscheme_projective.dimension = lambda self: 1
+    
 
 _do_speedup()
