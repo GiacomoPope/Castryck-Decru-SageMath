@@ -21,7 +21,16 @@ During development of the code, we created a weaker parameter set `SIKEp64` with
 
 Running `sage baby_SIDH.sage` on a laptop recovers Bob's private key in less than one minute.
 
-## Performance
+## Laptop Benchmarks
+
+|                          | Baby SIDH (`SIKEp64`) | `$IKEp217` | `SIKEp434` | `SIKEp503` | `SIKEp610` | `SIKEp751` |
+|--------------------------|-----------------------|------------|------------|:----------:|------------|:----------:|
+| Approximate Running Time | 30 seconds            | 5 minutes  | 30 minutes | -          | 1 hour     | -          |
+
+
+**Note**: Especially for the higher NIST levels, a lot of time is spent getting the first digits, and so performance time varies based on wether or not the first few values are `0` (fastest) or `2` (slowest).
+
+## Speeding SageMath up using a cache
 
 There is a SageMath performance issue with the group law for the Jacobian of a hyperelliptic curve. When testing equality, the code invokes `GF(p^k)(...)` for all coefficients. The constructor of the Finite Field includes a primality test for every call, which for larger primes is incredibly expensive.
 
