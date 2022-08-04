@@ -120,9 +120,9 @@ Included below are some recorded times for running the scripts with and without 
 - [x] `FromProdToJac()` (Deviation from original code) 
 - [x] `FromJacToJac()` (Deviation from original code)
 - [x] `Does22ChainSplit()`
-- [x] `OddCyclicSumOfSquares()` (Dead code, not implemented)
+- [x] `OddCyclicSumOfSquares()` (Code used to generate `uvtable`, not necessary to reimplement)
 - [x] `Pushing3Chain()`
-- [x] `Pushing9Chain()`
+- [x] `Pushing9Chain()` (Obselete code, not implemented)
 
 ### Main attack to re-write:
 
