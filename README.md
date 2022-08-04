@@ -42,17 +42,17 @@ $$
 $$
 
 $$
-\textsf{Cost} = c \left(\frac{3^{\beta_1}}{2} + \frac{4(b - \beta_1)}{3} \right)
+\textsf{Cost} = c \left(\frac{3^{\beta_1}}{2} + \frac{5(b - \beta_1)}{3} \right)
 $$
 
 |             | $c$   | $\beta_1$ | Cost       |
 |-------------|-------|-----------|------------|
-| `SIKEp64`   | 1s    | 2         | 27 seconds |
-| `$IKEp217`  | 4.5s  | 2         | 7 minutes  |
-| `SIKEp434`  | 12s   | 2         | 37 minutes |
-| `SIKEp503`  | 13s   | 4         | 53 minutes |
+| `SIKEp64`   | 1s    | 2         | 32 seconds |
+| `$IKEp217`  | 4.5s  | 2         | 8 minutes  |
+| `SIKEp434`  | 12s   | 2         | 45 minutes |
+| `SIKEp503`  | 13s   | 4         | 1 hour     |
 | `SIKEp610`  | 19s   | 5         | 2 hours    |
-| `SIKEp751`  | 26s   | 6         | 4.8 hours  |
+| `SIKEp751`  | 26s   | 6         | 5.5 hours  |
 
 Where $c$ has been estimated using a MacBook Pro using a 6-Core Intel Core i7 CPU @ 2.6 GHz.
 
