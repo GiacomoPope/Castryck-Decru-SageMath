@@ -219,7 +219,7 @@ def CastryckDecruAttack(E_start, P2, Q2, EB, PB, QB, two_i, solution=None):
                 print(skB)
                 break
 
-    key = sum([skB[i-1]*3^(i-1) for i in range(1,b-2)])
+    key = sum([skB[i]*3^(i) for i in range(b-3)])
 
     # bridge last safety gap
     tim2 = time.time()

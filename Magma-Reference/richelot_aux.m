@@ -1,3 +1,7 @@
+/*
+This code was downloaded from https://homes.esat.kuleuven.be/~wcastryc/ on 3 August 2022
+*/
+
 function FromProdToJac(C, E, P_c, Q_c, P, Q, a)
   Fp2 := BaseField(C);
   R<x> := PolynomialRing(Fp2);
