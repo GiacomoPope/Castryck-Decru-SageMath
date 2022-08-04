@@ -75,9 +75,9 @@ Included below are some estimated times for running the scripts with and without
 * To run the attack on the Microsoft `$IKEp217` challenge, run `sage SIKE_challenge.sage`
 * To run the attack on the parameters submitted to the NIST PQ competition:
     * Default: `NIST_submission = "SIKEp434"`. Simply run `sage SIKEp434.sage` for an attack on `SIKEp434`.
-    * Modify line 19: `NIST_submission = "SIKEp503"` for an attack against `SIKEp503`
-    * Modify line 19: `NIST_submission = "SIKEp610"` for an attack against `SIKEp610`
-    * Modify line 19: `NIST_submission = "SIKEp751"` for an attack against `SIKEp751`
+    * Modify line 12: `NIST_submission = "SIKEp503"` for an attack against `SIKEp503`
+    * Modify line 12: `NIST_submission = "SIKEp610"` for an attack against `SIKEp610`
+    * Modify line 12: `NIST_submission = "SIKEp751"` for an attack against `SIKEp751`
 
 ## Conversion Progress
 
