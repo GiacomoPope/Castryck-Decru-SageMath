@@ -29,7 +29,18 @@ def check_progress(solution, skB, tim):
         print(f"Altogether this took {time.time() - tim} seconds.")
         exit()
 
-def CastryckDecruAttack(E_start, P2, Q2, EB, PB, QB, two_i, solution=None):
+def check_valid(C, E, P_c, Q_c, P, Q, a, tim):
+    """
+    There is currently a bug in which sometimes the
+    wrong digit is calculated. When this happens, the
+    whole algorithm runs till the end before failing
+    """
+    if not Does22ChainSplit(C, E, P_c, Q_c, P, Q, a):
+        print(f"Something went wrong.")
+        print(f"Altogether this took {time.time() - tim} seconds.")
+        exit()
+
+def CastryckDecruAttack(E_start, P2, Q2, EB, PB, QB, two_i, solution=None, check_threshold=None):
     tim = time.time()
 
     skB = [] # TERNARY DIGITS IN EXPANSION OF BOB'S SECRET KEY
@@ -165,7 +176,6 @@ def CastryckDecruAttack(E_start, P2, Q2, EB, PB, QB, two_i, solution=None):
         next_i = i
         prolong = 0
 
-
     # now gather all remaining digits, except for last three (we close that gap by trial and error)
 
     # for i in [next_i..b-3] do
@@ -215,6 +225,8 @@ def CastryckDecruAttack(E_start, P2, Q2, EB, PB, QB, two_i, solution=None):
             if j == 2 or Does22ChainSplit(C, endEB, 2^alp*P_c, 2^alp*Q_c, 2^alp*endPB, 2^alp*endQB, ai):
                 print("Glue-and-split! This is most likely the secret digit.")
                 skB.append(j)
+                if check_threshold is not None and skB[-check_threshold:]==[2]*check_threshold:
+                   check_valid(C, endEB, 2^alp*P_c, 2^alp*Q_c, 2^alp*endPB, 2^alp*endQB, ai, tim)
                 if solution: check_progress(solution, skB, tim)
                 print(skB)
                 break
