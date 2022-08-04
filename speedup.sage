@@ -12,10 +12,6 @@ def _do_speedup():
     for x in to_patch:
         type(x).vector_space = sage.misc.cachefunc.cached_method(type(x).vector_space)
 
-
-
-    sage.schemes.hyperelliptic_curves.hyperelliptic_generic.Hyperelliptic_generic = lambda self: 1
-
     # An alternative would be to replace the bytecode in 
     # `sage.categories.fields.Fields.ParentMethods.vector_space`
     # as all types share the same method, by identity
