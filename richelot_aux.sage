@@ -276,7 +276,7 @@ def Pushing3Chain(E, P, i):
     # for j in [1..i] do
     for j in range(1, i+1):
         kerpol = x - (3^(i-j)*remainingker)[0]
-        comp = EllipticCurveIsogeny(C, kerpol)
+        comp = EllipticCurveIsogeny(C, kerpol, degree=3, check=False)
         C = comp.codomain()
         remainingker = comp(remainingker)
         chain.append(comp)
