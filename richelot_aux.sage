@@ -182,9 +182,9 @@ class RichelotCorr:
         Dy = (-Py) % Dx
         return (Dx, Dy)
 
-def FromJacToJac(h, D11, D12, D21, D22, a, power=None):
-    # power is an optional precomputed tuple (l, 2^l D1, 2^l D2)
-    # where l < a
+def FromJacToJac(h, D11, D12, D21, D22, a, powers=None):
+    # power is an optional list of precomputed tuples
+    # (l, 2^l D1, 2^l D2) where l < a are increasing
     R = h.parent()
     Fp2 = R.base()
 
@@ -192,24 +192,26 @@ def FromJacToJac(h, D11, D12, D21, D22, a, power=None):
     D1 = J(D11, D12)
     D2 = J(D21, D22)
 
-    next_power = None
-    if power is None:
-        # Precompute some power of D1, D2 to save computations later.
+    next_powers = None
+    if not powers:
+        # Precompute some powers of D1, D2 to save computations later.
         # We are going to perform O(a^1.5) squarings instead of O(a^2)
         if a >= 16:
-            gap = Integer(2*a).isqrt()
-            _D1 = 2^(a-gap)*D1
-            _D2 = 2^(a-gap)*D2
-            G1, _ = 2^(gap-1) * _D1
-            G2, _ = 2^(gap-1) * _D2
-            next_power = (a-gap, _D1, _D2)
+            gap = Integer(a).isqrt()
+            doubles = [(0, D1, D2)]
+            _D1, _D2 = D1, D2
+            for i in range(a-1):
+                _D1, _D2 = _D1+_D1, _D2+_D2
+                doubles.append((i+1, _D1, _D2))
+            _, (G1, _), (G2, _) = doubles[a-1]
+            next_powers = [doubles[a-2*gap], doubles[a-gap]]
         else:
             G1, _ = 2^(a-1) * D1
             G2, _ = 2^(a-1) * D2
     else:
-        (l, _D1, _D2) = power
-        if l < a-1 and a >= 16:
-            next_power = power
+        (l, _D1, _D2) = powers[-1]
+        if a >= 16:
+            next_powers = powers if l < a-1 else powers[:-1]
         G1, _ = 2^(a-1-l)*J(*_D1)
         G2, _ = 2^(a-1-l)*J(*_D2)
 
@@ -234,19 +236,20 @@ def FromJacToJac(h, D11, D12, D21, D22, a, power=None):
 
     imD1 = R.map(D1)
     imD2 = R.map(D2)
-    if next_power:
-        l, _D1, _D2 = next_power
-        next_power = (l, R.map(_D1), R.map(_D2))
-    return hnew, imD1[0], imD1[1], imD2[0], imD2[1], next_power
+    if next_powers:
+        next_powers = [(l, R.map(_D1), R.map(_D2))
+            for l, _D1, _D2 in next_powers]
+    return hnew, imD1[0], imD1[1], imD2[0], imD2[1], next_powers
 
 def Does22ChainSplit(C, E, P_c, Q_c, P, Q, a):
     Fp2 = C.base()
     # gluing step
     h, D11, D12, D21, D22 = FromProdToJac(C, E, P_c, Q_c, P, Q, a);
-    next_power = None
+    next_powers = None
     # print(f"order 2^{a-1} on hyp curve {h}")
     for i in range(1,a-2+1):
-        h, D11, D12, D21, D22, next_power = FromJacToJac(h, D11, D12, D21, D22, a-i, power=next_power)
+        h, D11, D12, D21, D22, next_powers = FromJacToJac(
+            h, D11, D12, D21, D22, a-i, powers=next_powers)
         # print(f"order 2^{a - i - 1} on hyp curve {h}")
     # now we are left with a quadratic splitting: is it singular?
     G1 = D11
