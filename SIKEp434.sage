@@ -41,7 +41,7 @@ print(f"If all goes well then the following digits should be found: {solution}")
 # ===================================
 # =====  ATTACK  ====================
 # ===================================
-recovered_key = CastryckDecruAttack(E_start, P2, Q2, EB, PB, QB, two_i, solution)
+recovered_key = CastryckDecruAttack(E_start, P2, Q2, EB, PB, QB, two_i)
 
 
 

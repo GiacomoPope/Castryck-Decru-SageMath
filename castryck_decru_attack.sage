@@ -5,31 +5,10 @@ load('richelot_aux.sage')
 load('uvtable.sage')
 load('speedup.sage')
 
-# Remove annoying messages about slow Gröbner
-set_verbose(-1)
-
 # ===================================
 # =====  ATTACK  ====================
 # ===================================
-
-def check_progress(solution, skB, tim):
-    """
-    There is currently a bug in which sometimes the
-    wrong digit is calculated. When this happens, the
-    whole algorithm runs till the end before failing
-
-    We include a cheat-test on each digit so we can exit 
-    earlier whenever we know the secret (such as in 
-    baby SIDH or in the SIKEp434 file)
-    """
-    if skB != solution[:len(skB)]:
-        print(f"The last digited calculated is incorrect.")
-        print(f"Expected: {solution[:len(skB)]}")
-        print(f"Computed: {skB}")
-        print(f"Altogether this took {time.time() - tim} seconds.")
-        exit()
-
-def CastryckDecruAttack(E_start, P2, Q2, EB, PB, QB, two_i, solution=None):
+def CastryckDecruAttack(E_start, P2, Q2, EB, PB, QB, two_i):
     tim = time.time()
 
     skB = [] # TERNARY DIGITS IN EXPANSION OF BOB'S SECRET KEY
@@ -90,7 +69,6 @@ def CastryckDecruAttack(E_start, P2, Q2, EB, PB, QB, two_i, solution=None):
             break
 
     print(skB)
-    if solution: check_progress(solution, skB, tim)
 
     # now compute longest prolongation of Bob's isogeny that may be needed
     length = 1
@@ -162,7 +140,6 @@ def CastryckDecruAttack(E_start, P2, Q2, EB, PB, QB, two_i, solution=None):
     if len(positives) == 1:
         print(f"Most likely good prolongation and the secret digit is: {positives[0]}")
         skB.append(positives[0])
-        if solution: check_progress(solution, skB, tim)
         print(skB)
         next_i = i + 1
     else:
@@ -221,7 +198,6 @@ def CastryckDecruAttack(E_start, P2, Q2, EB, PB, QB, two_i, solution=None):
             if j == 2 or Does22ChainSplit(C, endEB, 2^alp*P_c, 2^alp*Q_c, 2^alp*endPB, 2^alp*endQB, ai):
                 print("Glue-and-split! This is most likely the secret digit.")
                 skB.append(j)
-                if solution: check_progress(solution, skB, tim)
                 print(skB)
                 break
 

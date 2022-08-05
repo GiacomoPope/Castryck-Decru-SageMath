@@ -67,15 +67,6 @@ Deviation can be see in the file `richelot_aux.sage` in the functions:
 
 Thanks to [Rémy Oudompheng](https://twitter.com/oudomphe) for deriving and implementing these algorithms.
 
-## Bug!
-
-There's currently a bug hiding somewhere which *sometimes* results in the wrong digit being marked as correct. Your options for this are to:
-
-* Find the bug and help us improve the code
-* Restart the attack.
-
-It is not known if this is an edge case in the attack as is described in the Castryck-Decru paper, a bug in the Magma script that has been blindly copied or a bug in the SageMath reimplementation of the attack!
-
 ## Speeding SageMath up using a cache
 
 There is a SageMath performance issue with the group law for the Jacobian of a hyperelliptic curve. When testing equality, the code invokes `GF(p^k)(...)` for all coefficients. The constructor of the Finite Field includes a primality test for every call, which for larger primes is incredibly expensive.
