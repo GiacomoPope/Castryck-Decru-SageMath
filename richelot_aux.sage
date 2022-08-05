@@ -137,8 +137,10 @@ class RichelotCorr:
         self.x = hnew.parent().gen()
 
     def map(self, D):
+        "Computes (non-monic) Mumford coordinates for the image of D"
         U, V = D
-        assert U[2].is_one()
+        if not U[2].is_one():
+            U = U / U[2]
         # Sum and product of (xa, xb)
         s, p = -U[1], U[0]
         # Compute X coordinates (non reduced, degree 4)
@@ -178,25 +180,25 @@ class RichelotCorr:
         assert Px.degree() == 4
         assert Py.degree() == 3
 
-        Dx = ((self.hnew - Py ** 2) // Px).monic()
+        Dx = ((self.hnew - Py ** 2) // Px)
         Dy = (-Py) % Dx
         return (Dx, Dy)
 
 def jacobian_double(h, u, v):
     """
     Computes the double of a jacobian point (u,v)
-    given by Mumford coordinates.
+    given by Mumford coordinates: except that u is not required
+    to be monic, to avoid redundant reduction during repeated doubling.
 
     See SAGE cantor_composition() and cantor_reduction
     """
     assert u.degree() == 2
-    assert u[2] == 1
     # Replace u by u^2
     # Compute h3 the inverse of 2*v modulo u
     # Replace v by (v + h3 * (h - v^2)) % u
     q, r = u.quo_rem(2*v)
     if r[0] == 0: # gcd(u, v) = v, very improbable
-        a = q.monic()**2
+        a = q**2
         b = (v + (h - v^2) // v) % a
         return a, b
     else: # gcd(u, v) = 1
@@ -204,14 +206,14 @@ def jacobian_double(h, u, v):
         a = u*u
         b = (v + h3 * (h - v**2)) % a
         # Cantor reduction
-        Dx = ((h - b**2) // a).monic()
+        Dx = (h - b**2) // a
         Dy = (-b) % Dx
         return Dx, Dy
 
 def jacobian_iter_double(h, u, v, n):
     for _ in range(n):
         u, v = jacobian_double(h, u, v)
-    return u, v
+    return u.monic(), v
 
 def FromJacToJac(h, D11, D12, D21, D22, a, powers=None):
     # power is an optional list of precomputed tuples
@@ -236,6 +238,7 @@ def FromJacToJac(h, D11, D12, D21, D22, a, powers=None):
                 _D2 = jacobian_double(h, _D2[0], _D2[1])
                 doubles.append((i+1, _D1, _D2))
             _, (G1, _), (G2, _) = doubles[a-1]
+            G1, G2 = G1.monic(), G2.monic()
             next_powers = [doubles[a-2*gap], doubles[a-gap]]
         else:
             G1, _ = jacobian_iter_double(h, D1[0], D1[1], a-1)
