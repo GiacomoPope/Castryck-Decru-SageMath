@@ -4,8 +4,6 @@ def Coefficient(h, n):
     """
     Helper function to make things look similar!
     """
-    assert h.denominator().is_one()
-    h = h.numerator()
     return h[n]
 
 def FromProdToJac(C, E, P_c, Q_c, P, Q, a):
