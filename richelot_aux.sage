@@ -90,6 +90,100 @@ def FromProdToJac(C, E, P_c, Q_c, P, Q, a):
 
     return h, imPcP[0], imPcP[1], imQcQ[0], imQcQ[1]
 
+class RichelotCorr:
+    """
+    The Richelot correspondance between hyperelliptic
+    curves y²=g1*g2*g3 and y²=h1*h2*h3=hnew(x)
+
+    It is defined by equations:
+        g1(x1) h1(x2) + g2(x1) h2(x2) = 0
+    and y1 y2 = g1(x1) h1(x2) (x1 - x2)
+
+    Given a divisor D in Mumford coordinates:
+        U(x) = x^2 + u1 x + u0 = 0
+        y = V(x) = v1 x + v0
+    Let xa and xb be the symbolic roots of U.
+    Let s, p by the sum and product (s=-u1, p=u0)
+
+    Then on x-coordinates, the image of D is defined by equation:
+        (g1(xa) h1(x) + g2(xa) h2(x))
+      * (g1(xb) h1(x) + g2(xb) h2(x))
+    which is a symmetric function of xa and xb.
+    This is a non-reduced polynomial of degree 4.
+
+    Write gred = g-U = g1*x + g0
+    then gred(xa) gred(xb) = g1^2*p + g1*g0*s + g0^2
+    and  g1red(xa) g2red(xb) + g1red(xb) g2red(xa)
+       = 2 g11 g21 p + (g11*g20+g10*g21) s + 2 g10*g20
+
+    On y-coordinates, the image of D is defined by equations:
+           V(xa) y = Gred1(xa) h1(x) (xa - x)
+        OR V(xb) y = Gred1(xb) h1(x) (xb - x)
+    If we multiply:
+    * y^2 has coefficient V(xa)V(xb)
+    * y has coefficient h1(x) * (V(xa) Gred1(xb) (x-xb) + V(xb) Gred1(xa) (x-xa))
+      (x-degree 3)
+    * 1 has coefficient Gred1(xa) Gred1(xb) h1(x)^2 (x-xa)(x-xb)
+                      = Gred1(xa) Gred1(xb) h1(x)^2 U(x)
+      (x-degree 4)
+    """
+    def __init__(self, G1, G2, H1, H2, hnew):
+        assert G1[2].is_one() and G2[2].is_one()
+        self.G1 = G1
+        self.G2 = G2
+        self.H1 = H1
+        self.H11 = H1*H1
+        self.H12 = H1*H2
+        self.H22 = H2*H2
+        self.hnew = hnew
+        self.x = hnew.parent().gen()
+
+    def map(self, D):
+        U, V = D
+        assert U[2].is_one()
+        # Sum and product of (xa, xb)
+        s, p = -U[1], U[0]
+        # Compute X coordinates (non reduced, degree 4)
+        g1red = self.G1 - U
+        g2red = self.G2 - U
+        assert g1red[2].is_zero() and g2red[2].is_zero()
+        g11, g10 = g1red[1], g1red[0]
+        g21, g20 = g2red[1], g2red[0]
+        # see above
+        Px = (g11*g11*p + g11*g10*s + g10*g10) * self.H11 \
+           + (2*g11*g21*p + (g11*g20+g21*g10)*s + 2*g10*g20) * self.H12 \
+           + (g21*g21*p + g21*g20*s + g20*g20) * self.H22
+
+        # Compute Y coordinates (non reduced, degree 3)
+        assert V[2].is_zero()
+        v1, v0 = V[1], V[0]
+        # coefficient of y^2 is V(xa)V(xb)
+        Py2 = v1*v1*p + v1*v0*s + v0*v0
+        # coefficient of y is h1(x) * (V(xa) Gred1(xb) (x-xb) + V(xb) Gred1(xa) (x-xa))
+        # so we need to symmetrize:
+        # V(xa) Gred1(xb) (x-xb)
+        # = (v1*xa+v0)*(g11*xb+g10)*(x-xb)
+        # = (v1*g11*p + v1*g10*xa + v0*g11*xb + v0*g10)*x
+        # - xb*(v1*g11*p + v1*g10*xa + v0*g11*xb + v0*g10)
+        # Symmetrizing xb^2 gives u1^2-2*u0
+        Py1 = (2*v1*g11*p + v1*g10*s + v0*g11*s + 2*v0*g10)*self.x \
+          - (v1*g11*s*p + 2*v1*g10*p + v0*g11*(s*s-2*p) + v0*g10*s)
+        Py1 *= self.H1
+        # coefficient of 1 is Gred1(xa) Gred1(xb) h1(x)^2 U(x)
+        Py0 = self.H11 * U * (g11*g11*p + g11*g10*s + g10*g10)
+
+        # Now reduce the divisor, and compute Cantor reduction.
+        # Py2 * y^2 + Py1 * y + Py0 = 0
+        # y = - (Py2 * hnew + Py0) / Py1
+        _, Py1inv, _ = Py1.xgcd(Px)
+        Py = (- Py1inv * (Py2 * self.hnew + Py0)) % Px
+        assert Px.degree() == 4
+        assert Py.degree() == 3
+
+        Dx = ((self.hnew - Py ** 2) // Px).monic()
+        Dy = (-Py) % Dx
+        return (Dx, Dy)
+
 def FromJacToJac(h, D11, D12, D21, D22, a, power=None):
     # power is an optional precomputed tuple (l, 2^l D1, 2^l D2)
     # where l < a
@@ -138,77 +232,13 @@ def FromJacToJac(h, D11, D12, D21, D22, a, power=None):
     hnew = H1*H2*H3
 
     # Now compute image points: Richelot isogeny is defined by the degree 2
-    # correspondence:
-    # g1(x1) h1(x2) + g2(x1) h2(x2) = 0
-    # or y1 y2 = g1(x1) h1(x2) (x1 - x2)
+    R = RichelotCorr(G1, G2, H1, H2, hnew)
 
-    R2.<y,x,xa,xb> = PolynomialRing(Fp2, order="lex")
-    def image(D):
-        # Let x^2 + u1 x + u0 = U(x) = 0
-        #     y =   v1 x + v0
-        # be Mumford cordinates of D.
-        # Introduce formal coordinates xa, xb for the roots of U.
-        # We should compute the image of (xa, ya) and (xb, yb) through
-        # the correspondance.
-        U, V = D
-        u1, u0 = U[1], U[0]
-        assert U[2] == 1
-        # Perform manually-assisted elimination:
-        # Compute g1 % U and g2 % U
-        #    (g11 x1a + g10) h1(x2) + (g21 x1a + g20) h2(x2) = 0
-        # OR (g11 x1b + g10) h1(x2) + (g21 x1b + g20) h2(x2) = 0
-        # Multiply these equations:
-        G1red = G1 % U
-        G2red = G2 % U
-        Qx = (G1red.subs(x=xa) * H1 + G2red.subs(x=xa) * H2) * \
-             (G1red.subs(x=xb) * H1 + G2red.subs(x=xb) * H2)
-        # This is a polynomial in:
-        # xa*xb = u0
-        # xa + xb = -u1
-        Px = u0 * Qx.coefficient({xa: 1, xb: 1}) \
-           - u1 * Qx.coefficient({xa: 1, xb: 0}) \
-           + Qx.coefficient({xa: 0, xb: 0})
-        Px = Px.univariate_polynomial()
-
-        # Similarly
-        #    (v1 x1a + v0) y2 = (g11 x1a + g10) h1(x2) (x1a - x2)
-        # OR (v1 x1b + v0) y2 = (g11 x1b + g10) h1(x2) (x1b - x2)
-        # Multiply and reduce:
-        Qy = (V(xa) * y - G1red(xa) * H1 * (xa - x)) * \
-             (V(xb) * y - G1red(xb) * H1 * (xb - x))
-        # Reduce symmetric functions:
-        # xa^2 xb^2 = u0^2
-        # xa^2 xb + xa xb^2 = -u0*u1
-        # xa^2 + xb^2 = u1**2 - 2*u0
-        # etc.
-        Py = u0^2 * Qy.coefficient({xa: 2, xb: 2}) \
-           - u0 * u1 * Qy.coefficient({xa: 2, xb: 1}) \
-           + (u1**2 - 2*u0) * Qy.coefficient({xa: 2, xb: 0}) \
-           + u0 * Qy.coefficient({xa: 1, xb: 1}) \
-           - u1 * Qy.coefficient({xa: 1, xb: 0}) \
-           + Qy.coefficient({xa: 0, xb: 0})
-        # Py = A y^2 + B y + C
-        #    = B y + (A hnew + C) = 0
-        A = Py.coefficient({y: 2})
-        assert A.is_constant()
-        A = A.constant_coefficient()
-        B = Py.coefficient({y: 1}).univariate_polynomial()
-        C = Py.coefficient({y: 0}).univariate_polynomial()
-
-        _, Binv, _ = B.xgcd(Px)
-        Py = (- Binv * (A * hnew + C)) % Px
-
-        # Inlined Cantor reduction
-        # Px has degree 4, Py has degree 3
-        Dx = ((hnew - Py ** 2) // Px).monic()
-        Dy = (-Py) % Dx
-        return (Dx, Dy)
-
-    imD1 = image(D1)
-    imD2 = image(D2)
+    imD1 = R.map(D1)
+    imD2 = R.map(D2)
     if next_power:
         l, _D1, _D2 = next_power
-        next_power = (l, image(_D1), image(_D2))
+        next_power = (l, R.map(_D1), R.map(_D2))
     return hnew, imD1[0], imD1[1], imD2[0], imD2[1], next_power
 
 def Does22ChainSplit(C, E, P_c, Q_c, P, Q, a):
