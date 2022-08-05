@@ -219,11 +219,12 @@ def FromJacToJac(h, D11, D12, D21, D22, a, powers=None):
     # power is an optional list of precomputed tuples
     # (l, 2^l D1, 2^l D2) where l < a are increasing
     R = h.parent()
+    x = R.gen()
     Fp2 = R.base()
 
-    J = HyperellipticCurve(h).jacobian()
-    D1 = J(D11, D12)
-    D2 = J(D21, D22)
+    #J = HyperellipticCurve(h).jacobian()
+    D1 = (D11, D12)
+    D2 = (D21, D22)
 
     next_powers = None
     if not powers:
@@ -258,11 +259,14 @@ def FromJacToJac(h, D11, D12, D21, D22, a, powers=None):
     delta = Matrix(Fp2, 3, 3, [Coefficient(G1, 0), Coefficient(G1, 1), Coefficient(G1, 2),
                               Coefficient(G2, 0), Coefficient(G2, 1), Coefficient(G2, 2),
                               Coefficient(G3, 0), Coefficient(G3, 1), Coefficient(G3, 2)])
-    delta = delta.determinant()^(-1)
-
-    H1 = delta*(derivative(G2)*G3 - G2*derivative(G3))
-    H2 = delta*(derivative(G3)*G1 - G3*derivative(G1))
-    H3 = delta*(derivative(G1)*G2 - G1*derivative(G2))
+    # H1 = 1/det (G2[1]*G3[0] - G2[0]*G3[1])
+    #        +2x (G2[2]*G3[0] - G3[2]*G2[0])
+    #        +x^2(G2[1]*G3[2] - G3[1]*G2[2])
+    # The coefficients correspond to the inverse matrix of delta.
+    delta = delta.inverse()
+    H1 = -delta[0][0]*x^2 + 2*delta[1][0]*x - delta[2][0]
+    H2 = -delta[0][1]*x^2 + 2*delta[1][1]*x - delta[2][1]
+    H3 = -delta[0][2]*x^2 + 2*delta[1][2]*x - delta[2][2]
 
     hnew = H1*H2*H3
 
