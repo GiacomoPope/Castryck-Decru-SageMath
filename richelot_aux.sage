@@ -182,6 +182,37 @@ class RichelotCorr:
         Dy = (-Py) % Dx
         return (Dx, Dy)
 
+def jacobian_double(h, u, v):
+    """
+    Computes the double of a jacobian point (u,v)
+    given by Mumford coordinates.
+
+    See SAGE cantor_composition() and cantor_reduction
+    """
+    assert u.degree() == 2
+    assert u[2] == 1
+    # Replace u by u^2
+    # Compute h3 the inverse of 2*v modulo u
+    # Replace v by (v + h3 * (h - v^2)) % u
+    q, r = u.quo_rem(2*v)
+    if r[0] == 0: # gcd(u, v) = v, very improbable
+        a = q.monic()**2
+        b = (v + (h - v^2) // v) % a
+        return a, b
+    else: # gcd(u, v) = 1
+        h3 = 1 / (-r[0]) * q
+        a = u*u
+        b = (v + h3 * (h - v**2)) % a
+        # Cantor reduction
+        Dx = ((h - b**2) // a).monic()
+        Dy = (-b) % Dx
+        return Dx, Dy
+
+def jacobian_iter_double(h, u, v, n):
+    for _ in range(n):
+        u, v = jacobian_double(h, u, v)
+    return u, v
+
 def FromJacToJac(h, D11, D12, D21, D22, a, powers=None):
     # power is an optional list of precomputed tuples
     # (l, 2^l D1, 2^l D2) where l < a are increasing
@@ -201,19 +232,20 @@ def FromJacToJac(h, D11, D12, D21, D22, a, powers=None):
             doubles = [(0, D1, D2)]
             _D1, _D2 = D1, D2
             for i in range(a-1):
-                _D1, _D2 = _D1+_D1, _D2+_D2
+                _D1 = jacobian_double(h, _D1[0], _D1[1])
+                _D2 = jacobian_double(h, _D2[0], _D2[1])
                 doubles.append((i+1, _D1, _D2))
             _, (G1, _), (G2, _) = doubles[a-1]
             next_powers = [doubles[a-2*gap], doubles[a-gap]]
         else:
-            G1, _ = 2^(a-1) * D1
-            G2, _ = 2^(a-1) * D2
+            G1, _ = jacobian_iter_double(h, D1[0], D1[1], a-1)
+            G2, _ = jacobian_iter_double(h, D2[0], D2[1], a-1)
     else:
         (l, _D1, _D2) = powers[-1]
         if a >= 16:
             next_powers = powers if l < a-1 else powers[:-1]
-        G1, _ = 2^(a-1-l)*J(*_D1)
-        G2, _ = 2^(a-1-l)*J(*_D2)
+        G1, _ = jacobian_iter_double(h, _D1[0], _D1[1], a-1-l)
+        G2, _ = jacobian_iter_double(h, _D2[0], _D2[1], a-1-l)
 
     #assert 2^a*D1 == 0
     #assert 2^a*D2 == 0
