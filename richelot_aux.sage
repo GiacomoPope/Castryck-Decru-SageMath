@@ -90,30 +90,6 @@ def FromProdToJac(C, E, P_c, Q_c, P, Q, a):
 
     return h, imPcP[0], imPcP[1], imQcQ[0], imQcQ[1]
 
-def test_FromProdToJac():
-    # Choose some supersingular curves and 2^a torsion generators.
-    p = 2**61 - 1
-    assert p.is_prime()
-    k = GF(p^2)
-    E = EllipticCurve(k, [-1, 0])
-    assert E.is_supersingular()
-    assert E.order() == 2**122
-    C = EllipticCurve(k, [1, 0])
-    assert C.is_supersingular()
-    assert C.order() == 2**122
-    a = 61
-    Pc, Qc = C.gens()
-    P, Q = E.gens()
-    wc = Pc.weil_pairing(Qc, 2^a)
-    we = P.weil_pairing(Q, 2^a)
-    # make it an anti-isometry
-    k = we.log(wc)
-    Q = -pow(k, -1, 2^a) * Q
-    assert P.weil_pairing(Q, 2^a) * Pc.weil_pairing(Qc, 2^a) == 1
-    return FromProdToJac(C, E, Pc, Qc, P, Q, a)
-
-#test_FromProdToJac()
-
 def FromJacToJac(h, D11, D12, D21, D22, a, power=None):
     # power is an optional precomputed tuple (l, 2^l D1, 2^l D2)
     # where l < a
@@ -235,13 +211,6 @@ def FromJacToJac(h, D11, D12, D21, D22, a, power=None):
         next_power = (l, image(_D1), image(_D2))
     return hnew, imD1[0], imD1[1], imD2[0], imD2[1], next_power
 
-def test_FromJacToJac():
-    print("test_FromJacToJac")
-    h, D11, D12, D21, D22 = test_FromProdToJac()
-    FromJacToJac(h, D11, D12, D21, D22, 60)
-
-#test_FromJacToJac()
-
 def Does22ChainSplit(C, E, P_c, Q_c, P, Q, a):
     Fp2 = C.base()
     # gluing step
@@ -262,25 +231,6 @@ def Does22ChainSplit(C, E, P_c, Q_c, P, Q, a):
                                Coefficient(G3, 0), Coefficient(G3, 1), Coefficient(G3, 2)])
     delta = delta.determinant();
     return delta == 0
-
-def test_ChainSplit():
-    print("test_ChainSplit")
-    p = 2**61 - 1
-    k = GF(p^2)
-    E = EllipticCurve(k, [-1, 0])
-    C = EllipticCurve(k, [1, 0])
-    a = 61
-    Pc, Qc = C.gens()
-    P, Q = E.gens()
-    wc = Pc.weil_pairing(Qc, 2^a)
-    we = P.weil_pairing(Q, 2^a)
-    # make it an anti-isometry
-    k = we.log(wc)
-    Q = -pow(k, -1, 2^a) * Q
-    assert P.weil_pairing(Q, 2^a) * Pc.weil_pairing(Qc, 2^a) == 1
-    assert not Does22ChainSplit(C, E, Pc, Qc, P, Q, 61)
-
-#test_ChainSplit()
 
 def OddCyclicSumOfSquares(n, factexpl, provide_own_fac):
     return NotImplemented
