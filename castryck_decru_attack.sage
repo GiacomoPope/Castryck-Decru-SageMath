@@ -151,7 +151,13 @@ def CastryckDecruAttack(E_start, P2, Q2, EB, PB, QB, two_i, solution=None):
         if Does22ChainSplit(C, endEB, 2^alp*P_c, 2^alp*Q_c, 2^alp*endPB, 2^alp*endQB, ai):
             print("Glue-and-split!")
             positives.append(j)
-            break
+            # continue testing other digits unless we reached an
+            # ambiguity already:
+            # By Remark 4 of [Castryck-Decru], there a probability
+            # that K cancels the tail of Bob's isogeny, creating false
+            # positives, in this case, we have to switch to alternativeK.
+            if len(positives) > 1:
+                break
 
     if len(positives) == 1:
         print(f"Most likely good prolongation and the secret digit is: {positives[0]}")
