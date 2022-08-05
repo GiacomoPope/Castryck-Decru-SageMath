@@ -1,15 +1,5 @@
 # Don't pollute the global namespace
 def _do_speedup():
-    def _get_version_number():
-        """
-        version() returns a string (e.g.)
-        'SageMath version 9.6, Release Date: 2022-05-15'
-
-        The below parses the string and returns the version as a float
-        float('9.6')
-        """
-        return float(version().split(' ')[2][:-1])
-
     # And because why not
     proof.all(False)
 
@@ -18,7 +8,8 @@ def _do_speedup():
     # - https://trac.sagemath.org/ticket/34284 (Dimension of hyperelliptic curve)
     #
     # We should check the version of sage and if >= 9.7 skip the below patches
-    if _get_version_number() < 9.7:
+    from sage.misc.banner import require_version
+    if not require_version(9,7):
         # Since this type gets created before we could ever hope to monkey patch the 
         # `sage.categories.fields.Fields.ParentMethods`
         # method, we'll patch it on the relevant type instead.
