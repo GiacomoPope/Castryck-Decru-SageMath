@@ -19,7 +19,6 @@ def _do_speedup():
     #
     # We should check the version of sage and if >= 9.7 skip the below patches
     if _get_version_number() < 9.7:
-        print("applying monkey patch")
         # Since this type gets created before we could ever hope to monkey patch the 
         # `sage.categories.fields.Fields.ParentMethods`
         # method, we'll patch it on the relevant type instead.
