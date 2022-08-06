@@ -42,8 +42,12 @@ def CastryckDecruAttack(E_start, P2, Q2, EB, PB, QB, two_i):
     bi = b - bet1
     alp = a - ai
 
-    # for j in CartesianPower([0,1,2], bet1) do
     for first_digits in product([0,1,2], repeat=int(bet1)):
+        if first_digits == (2,)*bet1:
+            print("All other guesses failed, so first digits must be all 2!")
+            skB += first_digits
+            break
+
         print(f"Testing digits: {[first_digits[k] for k in range(bet1)]}")
 
         # tauhatkernel = 3^bi*P3 + sum([3^(k-1)*j[k-1] for k in range(1,beta+1)])*3^bi*Q3
@@ -53,14 +57,7 @@ def CastryckDecruAttack(E_start, P2, Q2, EB, PB, QB, two_i):
 
         tauhatkernel_distort = u*tauhatkernel + v*two_i(tauhatkernel)
 
-        C, tau_tilde = Pushing3Chain(E_start, tauhatkernel_distort, bet1)
-
-        P_c = u*P2 + v*two_i(P2) 
-        for taut in tau_tilde:
-            P_c = taut(P_c)
-        Q_c = u*Q2 + v*two_i(Q2)
-        for taut in tau_tilde:
-            Q_c = taut(Q_c)
+        C, P_c, Q_c = AuxiliaryIsogeny(bet1, u, v, E_start, P2, Q2, tauhatkernel, two_i)
 
         # if j eq <2 : k in [1..bet1]> or Does22ChainSplit(C, EB, 2^alp*P_c, 2^alp*Q_c, 2^alp*PB, 2^alp*QB, ai) then
         if first_digits == (2,)*bet1 or Does22ChainSplit(C, EB, 2^alp*P_c, 2^alp*Q_c, 2^alp*PB, 2^alp*QB, ai):
@@ -116,15 +113,7 @@ def CastryckDecruAttack(E_start, P2, Q2, EB, PB, QB, two_i):
             tauhatkernel += (3^(k-1)*skB[k-1])*3^bi*Q3
         tauhatkernel += 3^(i-1)*j*3^bi*Q3
 
-        tauhatkernel_distort = u*tauhatkernel + v*two_i(tauhatkernel)
-
-        C, tau_tilde = Pushing3Chain(E_start, tauhatkernel_distort, i)
-        P_c = u*P2 + v*two_i(P2)
-        for taut in tau_tilde:
-            P_c = taut(P_c)
-        Q_c = u*Q2 + v*two_i(Q2)
-        for taut in tau_tilde:
-            Q_c = taut(Q_c)
+        C, P_c, Q_c = AuxiliaryIsogeny(i, u, v, E_start, P2, Q2, tauhatkernel, two_i)
 
         if Does22ChainSplit(C, endEB, 2^alp*P_c, 2^alp*Q_c, 2^alp*endPB, 2^alp*endQB, ai):
             print("Glue-and-split!")
@@ -180,22 +169,21 @@ def CastryckDecruAttack(E_start, P2, Q2, EB, PB, QB, two_i):
 
         for j in range(0,3):
             print(f"Testing digit: {j}")
+            if j == 2:
+                print("All other guesses failed, so the digit must be 2")
+                skB.append(j)
+                print(skB)
+                break
+
             # tauhatkernel := 3^bi*P3 + (&+[3^(k-1)*skB[k] : k in [1..i-1]] + 3^(i-1)*j)*3^bi*Q3;
             tauhatkernel = 3^bi*P3 
             for k in range(1, i):
                 tauhatkernel += (3^(k-1)*skB[k-1])*3^bi*Q3
             tauhatkernel += 3^(i-1)*j*3^bi*Q3
 
-            tauhatkernel_distort =u*tauhatkernel + v*two_i(tauhatkernel)
-            
-            C, tau_tilde = Pushing3Chain(E_start, tauhatkernel_distort, i)
-            P_c = u*P2 + v*two_i(P2)
-            for taut in tau_tilde:
-                P_c = taut(P_c)
-            Q_c = u*Q2 + v*two_i(Q2)
-            for taut in tau_tilde:
-                Q_c = taut(Q_c)
-            if j == 2 or Does22ChainSplit(C, endEB, 2^alp*P_c, 2^alp*Q_c, 2^alp*endPB, 2^alp*endQB, ai):
+            C, P_c, Q_c = AuxiliaryIsogeny(i, u, v, E_start, P2, Q2, tauhatkernel, two_i)
+
+            if Does22ChainSplit(C, endEB, 2^alp*P_c, 2^alp*Q_c, 2^alp*endPB, 2^alp*endQB, ai):
                 print("Glue-and-split! This is most likely the secret digit.")
                 skB.append(j)
                 print(skB)

@@ -324,24 +324,13 @@ def Pushing3Chain(E, P, i):
         chain.append(comp)
     return C, chain
 
-def Pushing9Chain(E, P, i):
-    """
-    Compute chain of isogenies quotienting 
-    out a point P of order 3^i
-    """
-    Fp2 = E.base()
-    R.<x> = PolynomialRing(Fp2)
-    chain = []
-    C = E
-    remainingker = P
-    # for j in [1..i] do
-    for j in range(1, i+1):
-        # kerpol := &*[x - (k*9^(i-j)*remainingker)[1] : k in [1..4]];
-        kerpol = x
-        for k in range(1,4+1):
-                kerpol -= (k*9^(i-j)*remainingker)[0]
-        comp = EllipticCurveIsogeny(C, kerpol)
-        C = comp.codomain()
-        remainingker = comp(remainingker)
-        chain.append(comp)
-    return C, chain
+def AuxiliaryIsogeny(i, u, v, E_start, P2, Q2, tauhatkernel, two_i):
+    tauhatkernel_distort = u*tauhatkernel + v*two_i(tauhatkernel)
+    
+    C, tau_tilde = Pushing3Chain(E_start, tauhatkernel_distort, i)
+    P_c = u*P2 + v*two_i(P2)
+    Q_c = u*Q2 + v*two_i(Q2)
+    for taut in tau_tilde:
+        P_c = taut(P_c)
+        Q_c = taut(Q_c)
+    return C, P_c, Q_c
