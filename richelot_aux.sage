@@ -4,8 +4,6 @@ def Coefficient(h, n):
     """
     Helper function to make things look similar!
     """
-    assert h.denominator().is_one()
-    h = h.numerator()
     return h[n]
 
 def FromProdToJac(C, E, P_c, Q_c, P, Q, a):
@@ -90,60 +88,168 @@ def FromProdToJac(C, E, P_c, Q_c, P, Q, a):
 
     return h, imPcP[0], imPcP[1], imQcQ[0], imQcQ[1]
 
-def test_FromProdToJac():
-    # Choose some supersingular curves and 2^a torsion generators.
-    p = 2**61 - 1
-    assert p.is_prime()
-    k = GF(p^2)
-    E = EllipticCurve(k, [-1, 0])
-    assert E.is_supersingular()
-    assert E.order() == 2**122
-    C = EllipticCurve(k, [1, 0])
-    assert C.is_supersingular()
-    assert C.order() == 2**122
-    a = 61
-    Pc, Qc = C.gens()
-    P, Q = E.gens()
-    wc = Pc.weil_pairing(Qc, 2^a)
-    we = P.weil_pairing(Q, 2^a)
-    # make it an anti-isometry
-    k = we.log(wc)
-    Q = -pow(k, -1, 2^a) * Q
-    assert P.weil_pairing(Q, 2^a) * Pc.weil_pairing(Qc, 2^a) == 1
-    return FromProdToJac(C, E, Pc, Qc, P, Q, a)
+class RichelotCorr:
+    """
+    The Richelot correspondance between hyperelliptic
+    curves y²=g1*g2*g3 and y²=h1*h2*h3=hnew(x)
 
-#test_FromProdToJac()
+    It is defined by equations:
+        g1(x1) h1(x2) + g2(x1) h2(x2) = 0
+    and y1 y2 = g1(x1) h1(x2) (x1 - x2)
 
-def FromJacToJac(h, D11, D12, D21, D22, a, power=None):
-    # power is an optional precomputed tuple (l, 2^l D1, 2^l D2)
-    # where l < a
+    Given a divisor D in Mumford coordinates:
+        U(x) = x^2 + u1 x + u0 = 0
+        y = V(x) = v1 x + v0
+    Let xa and xb be the symbolic roots of U.
+    Let s, p by the sum and product (s=-u1, p=u0)
+
+    Then on x-coordinates, the image of D is defined by equation:
+        (g1(xa) h1(x) + g2(xa) h2(x))
+      * (g1(xb) h1(x) + g2(xb) h2(x))
+    which is a symmetric function of xa and xb.
+    This is a non-reduced polynomial of degree 4.
+
+    Write gred = g-U = g1*x + g0
+    then gred(xa) gred(xb) = g1^2*p + g1*g0*s + g0^2
+    and  g1red(xa) g2red(xb) + g1red(xb) g2red(xa)
+       = 2 g11 g21 p + (g11*g20+g10*g21) s + 2 g10*g20
+
+    On y-coordinates, the image of D is defined by equations:
+           V(xa) y = Gred1(xa) h1(x) (xa - x)
+        OR V(xb) y = Gred1(xb) h1(x) (xb - x)
+    If we multiply:
+    * y^2 has coefficient V(xa)V(xb)
+    * y has coefficient h1(x) * (V(xa) Gred1(xb) (x-xb) + V(xb) Gred1(xa) (x-xa))
+      (x-degree 3)
+    * 1 has coefficient Gred1(xa) Gred1(xb) h1(x)^2 (x-xa)(x-xb)
+                      = Gred1(xa) Gred1(xb) h1(x)^2 U(x)
+      (x-degree 4)
+    """
+    def __init__(self, G1, G2, H1, H2, hnew):
+        assert G1[2].is_one() and G2[2].is_one()
+        self.G1 = G1
+        self.G2 = G2
+        self.H1 = H1
+        self.H11 = H1*H1
+        self.H12 = H1*H2
+        self.H22 = H2*H2
+        self.hnew = hnew
+        self.x = hnew.parent().gen()
+
+    def map(self, D):
+        "Computes (non-monic) Mumford coordinates for the image of D"
+        U, V = D
+        if not U[2].is_one():
+            U = U / U[2]
+        # Sum and product of (xa, xb)
+        s, p = -U[1], U[0]
+        # Compute X coordinates (non reduced, degree 4)
+        g1red = self.G1 - U
+        g2red = self.G2 - U
+        assert g1red[2].is_zero() and g2red[2].is_zero()
+        g11, g10 = g1red[1], g1red[0]
+        g21, g20 = g2red[1], g2red[0]
+        # see above
+        Px = (g11*g11*p + g11*g10*s + g10*g10) * self.H11 \
+           + (2*g11*g21*p + (g11*g20+g21*g10)*s + 2*g10*g20) * self.H12 \
+           + (g21*g21*p + g21*g20*s + g20*g20) * self.H22
+
+        # Compute Y coordinates (non reduced, degree 3)
+        assert V[2].is_zero()
+        v1, v0 = V[1], V[0]
+        # coefficient of y^2 is V(xa)V(xb)
+        Py2 = v1*v1*p + v1*v0*s + v0*v0
+        # coefficient of y is h1(x) * (V(xa) Gred1(xb) (x-xb) + V(xb) Gred1(xa) (x-xa))
+        # so we need to symmetrize:
+        # V(xa) Gred1(xb) (x-xb)
+        # = (v1*xa+v0)*(g11*xb+g10)*(x-xb)
+        # = (v1*g11*p + v1*g10*xa + v0*g11*xb + v0*g10)*x
+        # - xb*(v1*g11*p + v1*g10*xa + v0*g11*xb + v0*g10)
+        # Symmetrizing xb^2 gives u1^2-2*u0
+        Py1 = (2*v1*g11*p + v1*g10*s + v0*g11*s + 2*v0*g10)*self.x \
+          - (v1*g11*s*p + 2*v1*g10*p + v0*g11*(s*s-2*p) + v0*g10*s)
+        Py1 *= self.H1
+        # coefficient of 1 is Gred1(xa) Gred1(xb) h1(x)^2 U(x)
+        Py0 = self.H11 * U * (g11*g11*p + g11*g10*s + g10*g10)
+
+        # Now reduce the divisor, and compute Cantor reduction.
+        # Py2 * y^2 + Py1 * y + Py0 = 0
+        # y = - (Py2 * hnew + Py0) / Py1
+        _, Py1inv, _ = Py1.xgcd(Px)
+        Py = (- Py1inv * (Py2 * self.hnew + Py0)) % Px
+        assert Px.degree() == 4
+        assert Py.degree() == 3
+
+        Dx = ((self.hnew - Py ** 2) // Px)
+        Dy = (-Py) % Dx
+        return (Dx, Dy)
+
+def jacobian_double(h, u, v):
+    """
+    Computes the double of a jacobian point (u,v)
+    given by Mumford coordinates: except that u is not required
+    to be monic, to avoid redundant reduction during repeated doubling.
+
+    See SAGE cantor_composition() and cantor_reduction
+    """
+    assert u.degree() == 2
+    # Replace u by u^2
+    # Compute h3 the inverse of 2*v modulo u
+    # Replace v by (v + h3 * (h - v^2)) % u
+    q, r = u.quo_rem(2*v)
+    if r[0] == 0: # gcd(u, v) = v, very improbable
+        a = q**2
+        b = (v + (h - v^2) // v) % a
+        return a, b
+    else: # gcd(u, v) = 1
+        h3 = 1 / (-r[0]) * q
+        a = u*u
+        b = (v + h3 * (h - v**2)) % a
+        # Cantor reduction
+        Dx = (h - b**2) // a
+        Dy = (-b) % Dx
+        return Dx, Dy
+
+def jacobian_iter_double(h, u, v, n):
+    for _ in range(n):
+        u, v = jacobian_double(h, u, v)
+    return u.monic(), v
+
+def FromJacToJac(h, D11, D12, D21, D22, a, powers=None):
+    # power is an optional list of precomputed tuples
+    # (l, 2^l D1, 2^l D2) where l < a are increasing
     R = h.parent()
+    x = R.gen()
     Fp2 = R.base()
 
-    J = HyperellipticCurve(h).jacobian()
-    D1 = J(D11, D12)
-    D2 = J(D21, D22)
+    #J = HyperellipticCurve(h).jacobian()
+    D1 = (D11, D12)
+    D2 = (D21, D22)
 
-    next_power = None
-    if power is None:
-        # Precompute some power of D1, D2 to save computations later.
+    next_powers = None
+    if not powers:
+        # Precompute some powers of D1, D2 to save computations later.
         # We are going to perform O(a^1.5) squarings instead of O(a^2)
         if a >= 16:
-            gap = Integer(2*a).isqrt()
-            _D1 = 2^(a-gap)*D1
-            _D2 = 2^(a-gap)*D2
-            G1, _ = 2^(gap-1) * _D1
-            G2, _ = 2^(gap-1) * _D2
-            next_power = (a-gap, _D1, _D2)
+            gap = Integer(a).isqrt()
+            doubles = [(0, D1, D2)]
+            _D1, _D2 = D1, D2
+            for i in range(a-1):
+                _D1 = jacobian_double(h, _D1[0], _D1[1])
+                _D2 = jacobian_double(h, _D2[0], _D2[1])
+                doubles.append((i+1, _D1, _D2))
+            _, (G1, _), (G2, _) = doubles[a-1]
+            G1, G2 = G1.monic(), G2.monic()
+            next_powers = [doubles[a-2*gap], doubles[a-gap]]
         else:
-            G1, _ = 2^(a-1) * D1
-            G2, _ = 2^(a-1) * D2
+            G1, _ = jacobian_iter_double(h, D1[0], D1[1], a-1)
+            G2, _ = jacobian_iter_double(h, D2[0], D2[1], a-1)
     else:
-        (l, _D1, _D2) = power
-        if l < a-1 and a >= 16:
-            next_power = power
-        G1, _ = 2^(a-1-l)*J(*_D1)
-        G2, _ = 2^(a-1-l)*J(*_D2)
+        (l, _D1, _D2) = powers[-1]
+        if a >= 16:
+            next_powers = powers if l < a-1 else powers[:-1]
+        G1, _ = jacobian_iter_double(h, _D1[0], _D1[1], a-1-l)
+        G2, _ = jacobian_iter_double(h, _D2[0], _D2[1], a-1-l)
 
     #assert 2^a*D1 == 0
     #assert 2^a*D2 == 0
@@ -153,103 +259,36 @@ def FromJacToJac(h, D11, D12, D21, D22, a, power=None):
     delta = Matrix(Fp2, 3, 3, [Coefficient(G1, 0), Coefficient(G1, 1), Coefficient(G1, 2),
                               Coefficient(G2, 0), Coefficient(G2, 1), Coefficient(G2, 2),
                               Coefficient(G3, 0), Coefficient(G3, 1), Coefficient(G3, 2)])
-    delta = delta.determinant()^(-1)
-
-    H1 = delta*(derivative(G2)*G3 - G2*derivative(G3))
-    H2 = delta*(derivative(G3)*G1 - G3*derivative(G1))
-    H3 = delta*(derivative(G1)*G2 - G1*derivative(G2))
+    # H1 = 1/det (G2[1]*G3[0] - G2[0]*G3[1])
+    #        +2x (G2[2]*G3[0] - G3[2]*G2[0])
+    #        +x^2(G2[1]*G3[2] - G3[1]*G2[2])
+    # The coefficients correspond to the inverse matrix of delta.
+    delta = delta.inverse()
+    H1 = -delta[0][0]*x^2 + 2*delta[1][0]*x - delta[2][0]
+    H2 = -delta[0][1]*x^2 + 2*delta[1][1]*x - delta[2][1]
+    H3 = -delta[0][2]*x^2 + 2*delta[1][2]*x - delta[2][2]
 
     hnew = H1*H2*H3
 
     # Now compute image points: Richelot isogeny is defined by the degree 2
-    # correspondence:
-    # g1(x1) h1(x2) + g2(x1) h2(x2) = 0
-    # or y1 y2 = g1(x1) h1(x2) (x1 - x2)
+    R = RichelotCorr(G1, G2, H1, H2, hnew)
 
-    R2.<y,x,xa,xb> = PolynomialRing(Fp2, order="lex")
-    def image(D):
-        # Let x^2 + u1 x + u0 = U(x) = 0
-        #     y =   v1 x + v0
-        # be Mumford cordinates of D.
-        # Introduce formal coordinates xa, xb for the roots of U.
-        # We should compute the image of (xa, ya) and (xb, yb) through
-        # the correspondance.
-        U, V = D
-        u1, u0 = U[1], U[0]
-        assert U[2] == 1
-        # Perform manually-assisted elimination:
-        # Compute g1 % U and g2 % U
-        #    (g11 x1a + g10) h1(x2) + (g21 x1a + g20) h2(x2) = 0
-        # OR (g11 x1b + g10) h1(x2) + (g21 x1b + g20) h2(x2) = 0
-        # Multiply these equations:
-        G1red = G1 % U
-        G2red = G2 % U
-        Qx = (G1red.subs(x=xa) * H1 + G2red.subs(x=xa) * H2) * \
-             (G1red.subs(x=xb) * H1 + G2red.subs(x=xb) * H2)
-        # This is a polynomial in:
-        # xa*xb = u0
-        # xa + xb = -u1
-        Px = u0 * Qx.coefficient({xa: 1, xb: 1}) \
-           - u1 * Qx.coefficient({xa: 1, xb: 0}) \
-           + Qx.coefficient({xa: 0, xb: 0})
-        Px = Px.univariate_polynomial()
-
-        # Similarly
-        #    (v1 x1a + v0) y2 = (g11 x1a + g10) h1(x2) (x1a - x2)
-        # OR (v1 x1b + v0) y2 = (g11 x1b + g10) h1(x2) (x1b - x2)
-        # Multiply and reduce:
-        Qy = (V(xa) * y - G1red(xa) * H1 * (xa - x)) * \
-             (V(xb) * y - G1red(xb) * H1 * (xb - x))
-        # Reduce symmetric functions:
-        # xa^2 xb^2 = u0^2
-        # xa^2 xb + xa xb^2 = -u0*u1
-        # xa^2 + xb^2 = u1**2 - 2*u0
-        # etc.
-        Py = u0^2 * Qy.coefficient({xa: 2, xb: 2}) \
-           - u0 * u1 * Qy.coefficient({xa: 2, xb: 1}) \
-           + (u1**2 - 2*u0) * Qy.coefficient({xa: 2, xb: 0}) \
-           + u0 * Qy.coefficient({xa: 1, xb: 1}) \
-           - u1 * Qy.coefficient({xa: 1, xb: 0}) \
-           + Qy.coefficient({xa: 0, xb: 0})
-        # Py = A y^2 + B y + C
-        #    = B y + (A hnew + C) = 0
-        A = Py.coefficient({y: 2})
-        assert A.is_constant()
-        A = A.constant_coefficient()
-        B = Py.coefficient({y: 1}).univariate_polynomial()
-        C = Py.coefficient({y: 0}).univariate_polynomial()
-
-        _, Binv, _ = B.xgcd(Px)
-        Py = (- Binv * (A * hnew + C)) % Px
-
-        # Inlined Cantor reduction
-        # Px has degree 4, Py has degree 3
-        Dx = ((hnew - Py ** 2) // Px).monic()
-        Dy = (-Py) % Dx
-        return (Dx, Dy)
-
-    imD1 = image(D1)
-    imD2 = image(D2)
-    if next_power:
-        l, _D1, _D2 = next_power
-        next_power = (l, image(_D1), image(_D2))
-    return hnew, imD1[0], imD1[1], imD2[0], imD2[1], next_power
-
-def test_FromJacToJac():
-    print("test_FromJacToJac")
-    h, D11, D12, D21, D22 = test_FromProdToJac()
-    FromJacToJac(h, D11, D12, D21, D22, 60)
-
-#test_FromJacToJac()
+    imD1 = R.map(D1)
+    imD2 = R.map(D2)
+    if next_powers:
+        next_powers = [(l, R.map(_D1), R.map(_D2))
+            for l, _D1, _D2 in next_powers]
+    return hnew, imD1[0], imD1[1], imD2[0], imD2[1], next_powers
 
 def Does22ChainSplit(C, E, P_c, Q_c, P, Q, a):
     Fp2 = C.base()
     # gluing step
     h, D11, D12, D21, D22 = FromProdToJac(C, E, P_c, Q_c, P, Q, a);
-    next_power = None
+    next_powers = None
     # print(f"order 2^{a-1} on hyp curve {h}")
     for i in range(1,a-2+1):
-        h, D11, D12, D21, D22, next_power = FromJacToJac(h, D11, D12, D21, D22, a-i, power=next_power)
+        h, D11, D12, D21, D22, next_powers = FromJacToJac(
+            h, D11, D12, D21, D22, a-i, powers=next_powers)
         # print(f"order 2^{a - i - 1} on hyp curve {h}")
     # now we are left with a quadratic splitting: is it singular?
     G1 = D11
@@ -262,25 +301,6 @@ def Does22ChainSplit(C, E, P_c, Q_c, P, Q, a):
                                Coefficient(G3, 0), Coefficient(G3, 1), Coefficient(G3, 2)])
     delta = delta.determinant();
     return delta == 0
-
-def test_ChainSplit():
-    print("test_ChainSplit")
-    p = 2**61 - 1
-    k = GF(p^2)
-    E = EllipticCurve(k, [-1, 0])
-    C = EllipticCurve(k, [1, 0])
-    a = 61
-    Pc, Qc = C.gens()
-    P, Q = E.gens()
-    wc = Pc.weil_pairing(Qc, 2^a)
-    we = P.weil_pairing(Q, 2^a)
-    # make it an anti-isometry
-    k = we.log(wc)
-    Q = -pow(k, -1, 2^a) * Q
-    assert P.weil_pairing(Q, 2^a) * Pc.weil_pairing(Qc, 2^a) == 1
-    assert not Does22ChainSplit(C, E, Pc, Qc, P, Q, 61)
-
-#test_ChainSplit()
 
 def OddCyclicSumOfSquares(n, factexpl, provide_own_fac):
     return NotImplemented
@@ -297,8 +317,8 @@ def Pushing3Chain(E, P, i):
     remainingker = P
     # for j in [1..i] do
     for j in range(1, i+1):
-        kerpol = x - (3^(i-j)*remainingker)[0]
-        comp = EllipticCurveIsogeny(C, kerpol)
+        ker = 3^(i-j)*remainingker
+        comp = EllipticCurveIsogeny(C, [ker], degree=3, check=False)
         C = comp.codomain()
         remainingker = comp(remainingker)
         chain.append(comp)
