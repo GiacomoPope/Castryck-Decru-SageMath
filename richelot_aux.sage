@@ -310,8 +310,6 @@ def Pushing3Chain(E, P, i):
     Compute chain of isogenies quotienting 
     out a point P of order 3^i
     """
-    Fp2 = E.base()
-    R.<x> = PolynomialRing(Fp2)
     chain = []
     C = E
     remainingker = P
