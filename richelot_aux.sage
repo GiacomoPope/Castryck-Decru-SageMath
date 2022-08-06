@@ -323,6 +323,13 @@ def Pushing3Chain(E, P, i):
     return C, chain
 
 def AuxiliaryIsogeny(i, u, v, E_start, P2, Q2, tauhatkernel, two_i):
+    """
+    Compute the distored  kernel using precomputed u,v and the 
+    automorphism two_i.
+
+    This is used to construct the curve C from E_start and we
+    compute the image of the points P_c and Q_c
+    """
     tauhatkernel_distort = u*tauhatkernel + v*two_i(tauhatkernel)
     
     C, tau_tilde = Pushing3Chain(E_start, tauhatkernel_distort, i)
