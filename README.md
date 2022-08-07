@@ -8,13 +8,14 @@ SageMath implementation of [An efficient key recovery attack on SIDH, with Thoma
 
 During development of the code, we created a weaker parameter set `SIKEp64` with $p = 2^{33}\*3^{19} - 1$. This has the benefit of helping debug our implementation while also giving instant gratification of seeing an attack in real time.
 
-Running `sage baby_SIDH.sage` on a laptop recovers Bob's private key in less than one minute.
+Running `sage baby_SIDH.sage` on a laptop recovers Bob's private key in less than ten seconds.
 
 ## Breaking SIDH on a Laptop
 
-|                          | `SIKEp64`  | `$IKEp217` | `SIKEp434` | `SIKEp503` | `SIKEp610` | `SIKEp751`   |
-|--------------------------|------------|------------|------------|:----------:|------------|:------------:|
-| Approximate Running Time | 5 seconds  | 2 minutes  | 25 minutes | 40 minutes | 1.5 hours  | 2.5-6 hours  |
+| Approximate Running Time      | `SIKEp64`  | `$IKEp217` | `SIKEp434` | `SIKEp503` | `SIKEp610` | `SIKEp751`   |
+|-------------------------------|:----------:|------------|------------|:----------:|------------|:------------:|
+| Magma (Proof of Concept)      |   -        | 6 minutes  | 62 minutes | 2h19m      | 8h15m      | 20h37m       |
+| SageMath (Our implementation) | 5 seconds  | 2 minutes  | 10 minutes | 15 minutes | 25 minutes | 1-2 hours    |
 
 **Note**: Especially for the higher NIST levels, a lot of time is spent getting the first digits, and so performance time varies based on whether or not the first few values are `0` (fastest) or `2` (slowest). For example, attacking `SIKEp751`, similar hardware has been run multiple times with a compute times ranging from 45 minsto 3 hours. 
 
@@ -44,16 +45,16 @@ $$
 \textsf{Cost} = c \left(\frac{3^{\beta_1}}{2} + \frac{5(b - \beta_1)}{3} \right)
 $$
 
-|             | $c$   | $\beta_1$ | Cost       |
-|-------------|-------|-----------|------------|
-| `SIKEp64`   | 1s    | 2         | 32 seconds |
-| `$IKEp217`  | 4.5s  | 2         | 8 minutes  |
-| `SIKEp434`  | 12s   | 2         | 45 minutes |
-| `SIKEp503`  | 13s   | 4         | 1 hour     |
-| `SIKEp610`  | 19s   | 5         | 2 hours    |
-| `SIKEp751`  | 26s   | 6         | 5.5 hours  |
+|             | $c$   | $\beta_1$ | Cost        |
+|-------------|-------|-----------|-------------|
+| `SIKEp64`   | 0.2s  | 2         | 6.5 seconds |
+| `$IKEp217`  | 1s    | 2         | 2 minutes   |
+| `SIKEp434`  | 3.4s  | 2         | 13 minutes  |
+| `SIKEp503`  | 4.5s  | 4         | 22 minutes  |
+| `SIKEp610`  | 6s    | 5         | 43 minutes  |
+| `SIKEp751`  | 8.4s  | 6         | 1.75 hours  |
 
-Where $c$ has been estimated using a MacBook Pro using a 6-Core Intel Core i7 CPU @ 2.6 GHz.
+Where $c$ has been estimated using a MacBook Pro using a Intel Core i7 CPU @ 2.6 GHz. **Note** as $c$ was benchmarked for the *first* oracle calls, these are over-estimates, as the oracle calls are faster as more digits are collected.
 
 
 ## Deviation from Castryck-Decru Attack
@@ -103,18 +104,6 @@ A slow call to compute the dimension is made when running `HyperElliptic(h).jaco
 from sage.schemes.projective.projective_subscheme import AlgebraicScheme_subscheme_projective
 AlgebraicScheme_subscheme_projective.dimension = lambda self: 1
 ```
-
-### Performance estimates with different patches
-
-|                       | Vanilla :icecream: | No Proof :sleeping: | Monkey Patch :monkey_face: | Sage Patch 🩹 |
-|-----------------------|:------------------:|:-------------------:|:--------------------------:|:-------------:|
-| Baby SIDH (`SIKEp64`) | 1 minute           | 1 minute            | 1 minute                   | 1 minute      |
-| `$IKEp217` Challenge  |          -         | 30 minutes          | 15 minutes                 | 15 minutes    |
-| `SIKEp434`            |          -         |          -          | 1.5 hours                  | 1.5 hours     |
-| `SIKEp503`            |          -         |          -          | 3.5 hours                  |       -       |
-| `SIKEp610`            |          -         |          -          |              -             |       -       |
-| `SIKEp751`            |          -         |          -          |              -             |       -       |
-
 
 ## Conversion Progress
 

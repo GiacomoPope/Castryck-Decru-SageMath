@@ -60,7 +60,7 @@ def CastryckDecruAttack(E_start, P2, Q2, EB, PB, QB, two_i):
         C, P_c, Q_c = AuxiliaryIsogeny(bet1, u, v, E_start, P2, Q2, tauhatkernel, two_i)
 
         # if j eq <2 : k in [1..bet1]> or Does22ChainSplit(C, EB, 2^alp*P_c, 2^alp*Q_c, 2^alp*PB, 2^alp*QB, ai) then
-        if first_digits == (2,)*bet1 or Does22ChainSplit(C, EB, 2^alp*P_c, 2^alp*Q_c, 2^alp*PB, 2^alp*QB, ai):
+        if Does22ChainSplit(C, EB, 2^alp*P_c, 2^alp*Q_c, 2^alp*PB, 2^alp*QB, ai):
             print("Glue-and-split! These are most likely the secret digits.")
             skB += first_digits
             break
