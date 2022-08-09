@@ -6,7 +6,7 @@ SageMath implementation of [An efficient key recovery attack on SIDH, with Thoma
 
 ## Baby Example
 
-During development of the code, we created a weaker parameter set `SIKEp64` with $p = 2^{33}\*3^{19} - 1$. This has the benefit of helping debug our implementation while also giving instant gratification of seeing an attack in real time.
+During development of the code, we created a weaker parameter set `SIKEp64` with $p = 2^{33}\cdot 3^{19} - 1$. This has the benefit of helping debug our implementation while also giving instant gratification of seeing an attack in real time.
 
 Running `sage baby_SIDH.sage` on a laptop recovers Bob's private key in less than ten seconds.
 
@@ -31,13 +31,15 @@ Running `sage baby_SIDH.sage` on a laptop recovers Bob's private key in less tha
 
 ### Parallelism
 
-You can now run the attack in parallel thanks to ork by Lorenz Panny. 
+You can now run the attack partly in parallel thanks to work by Lorenz Panny.
 
-* To run the `SIKEp434.sage` on all available cores, run `sage SIKEp434.sage --parallel`. 
-* To choose the number of cores you want to use, edit line `49` in `SIKEp434.sage`. 
+* To run the attack on all available cores, simply add `--parallel` to the command line. Example: `sage SIKEp434.sage --parallel`.
+* To choose the number of cores to use, manually change the value of `num_cores` in any of the attack scripts.
   * If someone wants to make a nice CLI please feel free to make a pull request.
-  
-Essentially, we can guess the first $\beta_1$ digits in parallel (which has a dramatic improvement for higher level NIST parameters) and then guess both $j=0$ and $j=1$ in parallel rather than in serial for the remaining digits. This means we expect an approximate 2x speed up for `SIKEp434` and even more for higher levels.
+
+Essentially, we can guess the first $\beta_1$ digits in parallel (which has a dramatic improvement for higher level NIST parameters) and then guess both $j=0$ and $j=1$ in parallel rather than serially for the remaining digits. This means we expect an approximate 1.6× speedup for `SIKEp434` and even more for higher levels.
+
+Note that this optimization improves latency at the expense of throughput: The overall amount of work is higher, but the attack finishes quicker. Parallelism more fine-grained than simply testing all guesses simultaneously will certainly improve this, but this seems to be much less trivial to implement in SageMath.
 
 ## Estimating the running time
 
