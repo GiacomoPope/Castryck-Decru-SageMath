@@ -100,7 +100,7 @@ def CastryckDecruAttack(E_start, P2, Q2, EB, PB, QB, two_i):
     endQB = EBprolong[0](QB)
     endEB = EBprolong[0].codomain()
     # Speeds things up in Sage
-    endEB.set_order((p+1)^2)
+    endEB.set_order((p+1)^2, num_checks=0)
 
     positives = []
 
@@ -161,7 +161,7 @@ def CastryckDecruAttack(E_start, P2, Q2, EB, PB, QB, two_i):
         if j == prolong:
             endEB = EBprolong[j-1].codomain()
             # Speeds things up in Sage
-            endEB.set_order((p+1)^2)
+            endEB.set_order((p+1)^2, num_checks=0)
 
 
         for j in range(0,3):
