@@ -9,7 +9,16 @@ load('speedup.sage')
 # =====  ATTACK  ====================
 # ===================================
 
-def CastryckDecruAttackParallel(E_start, P2, Q2, EB, PB, QB, two_i, num_cores):
+def possibly_parallel(num_cores):
+    if num_cores == 1:
+        def _wrap(fun):
+            def _fun(args):
+                for a in args:
+                    yield ((a,), None), fun(a)
+            return _wrap
+    return parallel(num_cores)
+
+def CastryckDecruAttack(E_start, P2, Q2, EB, PB, QB, two_i, num_cores=1):
     tim = time.time()
 
     skB = [] # TERNARY DIGITS IN EXPANSION OF BOB'S SECRET KEY
@@ -43,8 +52,10 @@ def CastryckDecruAttackParallel(E_start, P2, Q2, EB, PB, QB, two_i, num_cores):
     bi = b - bet1
     alp = a - ai
 
-    @parallel(num_cores)
+    @possibly_parallel(num_cores)
     def CheckGuess(first_digits):
+        print(f"Testing digits: {first_digits}")
+
         # tauhatkernel = 3^bi*P3 + sum([3^(k-1)*j[k-1] for k in range(1,beta+1)])*3^bi*Q3
         scalar = sum(3^k*d for k,d in enumerate(first_digits))
         tauhatkernel = 3^bi * (P3 + scalar*Q3)
@@ -59,8 +70,6 @@ def CastryckDecruAttackParallel(E_start, P2, Q2, EB, PB, QB, two_i, num_cores):
 
     for result in CheckGuess(guesses):
         ((first_digits,), _), is_split = result
-
-        print(f"Tested digits: {[first_digits[k] for k in range(bet1)]}")
 
         # if j eq <2 : k in [1..bet1]> or Does22ChainSplit(C, EB, 2^alp*P_c, 2^alp*Q_c, 2^alp*PB, 2^alp*QB, ai) then
         if is_split:
@@ -112,8 +121,10 @@ def CastryckDecruAttackParallel(E_start, P2, Q2, EB, PB, QB, two_i, num_cores):
 
     positives = []
 
-    @parallel(num_cores)
+    @possibly_parallel(num_cores)
     def CheckGuess(j):
+        print(f"Testing digit: {j}")
+
         # tauhatkernel := 3^bi*P3 + (&+[3^(k-1)*skB[k] : k in [1..i-1]] + 3^(i-1)*j)*3^bi*Q3;
         scalar = sum(3^k*d for k,d in enumerate(skB)) + 3^(i-1)*j
         tauhatkernel = 3^bi * (P3 + scalar*Q3)
@@ -124,7 +135,6 @@ def CastryckDecruAttackParallel(E_start, P2, Q2, EB, PB, QB, two_i, num_cores):
 
     for result in CheckGuess([0,1,2]):
         ((j,), _), is_split = result
-        print(f"Tested digit: {j}")
         if is_split:
             print("Glue-and-split!")
             positives.append(j)
@@ -176,8 +186,10 @@ def CastryckDecruAttackParallel(E_start, P2, Q2, EB, PB, QB, two_i, num_cores):
             # Speeds things up in Sage
             endEB.set_order((p+1)^2, num_checks=0)
 
-        @parallel(num_cores)
+        @possibly_parallel(num_cores)
         def CheckGuess(j):
+            print(f"Testing digit: {j}")
+
             # tauhatkernel := 3^bi*P3 + (&+[3^(k-1)*skB[k] : k in [1..i-1]] + 3^(i-1)*j)*3^bi*Q3;
             scalar = sum(3^k*d for k,d in enumerate(skB)) + 3^(i-1)*j
             tauhatkernel = 3^bi * (P3 + scalar * Q3)
@@ -188,7 +200,6 @@ def CastryckDecruAttackParallel(E_start, P2, Q2, EB, PB, QB, two_i, num_cores):
 
         for result in CheckGuess([0,1]):
             ((j,), _), is_split = result
-            print(f"Tested digit: {j}")
 
             if is_split:
                 print("Glue-and-split! This is most likely the secret digit.")
@@ -205,7 +216,7 @@ def CastryckDecruAttackParallel(E_start, P2, Q2, EB, PB, QB, two_i, num_cores):
     # bridge last safety gap
     tim2 = time.time()
 
-    @parallel(num_cores)
+    @possibly_parallel(num_cores)
     def CheckGuess(i):
         bobskey = key + i*3^(b-3)
         bobscurve, _ = Pushing3Chain(E_start, P3 + bobskey*Q3, b)
