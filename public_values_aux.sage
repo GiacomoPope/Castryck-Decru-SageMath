@@ -2,7 +2,7 @@ def generate_automorphism(E):
     phi = EllipticCurveIsogeny(E, x)
     E1728 = phi.codomain()
     # Speeds things up in Sage
-    E1728.set_order((p+1)^2)
+    E1728.set_order((p+1)^2, num_checks=0)
 
     for iota in E1728.automorphisms():
         P = E1728.random_point()
@@ -35,7 +35,7 @@ def gen_bob_keypair(E_start, P2, Q2, P3, Q3):
     K = P3 + bobs_key*Q3
     phi = E_start.isogeny(K, algorithm="factored")
     EB = phi.codomain()
-    EB.set_order((p+1)^2)
+    EB.set_order((p+1)^2, num_checks=0)
 
     PB, QB = phi(P2), phi(Q2)
 

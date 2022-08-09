@@ -46,9 +46,8 @@ def CastryckDecruAttackParallel(E_start, P2, Q2, EB, PB, QB, two_i, num_cores):
     @parallel(num_cores)
     def CheckGuess(first_digits):
         # tauhatkernel = 3^bi*P3 + sum([3^(k-1)*j[k-1] for k in range(1,beta+1)])*3^bi*Q3
-        tauhatkernel = 3^bi*P3
-        for k in range(1, bet1+1):
-            tauhatkernel += (3^(k-1)*first_digits[k-1])*3^bi*Q3
+        scalar = sum(3^k*d for k,d in enumerate(first_digits))
+        tauhatkernel = 3^bi * (P3 + scalar*Q3)
 
         tauhatkernel_distort = u*tauhatkernel + v*two_i(tauhatkernel)
 
@@ -109,17 +108,15 @@ def CastryckDecruAttackParallel(E_start, P2, Q2, EB, PB, QB, two_i, num_cores):
     endQB = EBprolong[0](QB)
     endEB = EBprolong[0].codomain()
     # Speeds things up in Sage
-    endEB.set_order((p+1)^2)
+    endEB.set_order((p+1)^2, num_checks=0)
 
     positives = []
 
     @parallel(num_cores)
     def CheckGuess(j):
         # tauhatkernel := 3^bi*P3 + (&+[3^(k-1)*skB[k] : k in [1..i-1]] + 3^(i-1)*j)*3^bi*Q3;
-        tauhatkernel = 3^bi*P3
-        for k in range(1, i):
-            tauhatkernel += (3^(k-1)*skB[k-1])*3^bi*Q3
-        tauhatkernel += 3^(i-1)*j*3^bi*Q3
+        scalar = sum(3^k*d for k,d in enumerate(skB)) + 3^(i-1)*j
+        tauhatkernel = 3^bi * (P3 + scalar*Q3)
 
         C, P_c, Q_c = AuxiliaryIsogeny(i, u, v, E_start, P2, Q2, tauhatkernel, two_i)
 
@@ -177,15 +174,13 @@ def CastryckDecruAttackParallel(E_start, P2, Q2, EB, PB, QB, two_i, num_cores):
         if j == prolong:
             endEB = EBprolong[j-1].codomain()
             # Speeds things up in Sage
-            endEB.set_order((p+1)^2)
+            endEB.set_order((p+1)^2, num_checks=0)
 
         @parallel(num_cores)
         def CheckGuess(j):
             # tauhatkernel := 3^bi*P3 + (&+[3^(k-1)*skB[k] : k in [1..i-1]] + 3^(i-1)*j)*3^bi*Q3;
-            tauhatkernel = 3^bi*P3
-            for k in range(1, i):
-                tauhatkernel += (3^(k-1)*skB[k-1])*3^bi*Q3
-            tauhatkernel += 3^(i-1)*j*3^bi*Q3
+            scalar = sum(3^k*d for k,d in enumerate(skB)) + 3^(i-1)*j
+            tauhatkernel = 3^bi * (P3 + scalar * Q3)
 
             C, P_c, Q_c = AuxiliaryIsogeny(i, u, v, E_start, P2, Q2, tauhatkernel, two_i)
 
