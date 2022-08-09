@@ -1,4 +1,5 @@
 load('public_values_aux.sage')
+load('castryck_decru_attack.sage')
 
 SIKE_parameters = {
     "SIKEp434" : (216, 137),
@@ -41,17 +42,16 @@ print(f"If all goes well then the following digits should be found: {solution}")
 # ===================================
 # =====  ATTACK  ====================
 # ===================================
-import sys
 
-if len(sys.argv) > 1 and sys.argv[1] == "--parallel":
-    load('castryck_decru_attack_parallel.sage')
-    # Set number of cores for parallel computation
-    num_cores = os.cpu_count()
-    print(f"Performing the attack in parallel using {num_cores} cores")
-    recovered_key = CastryckDecruAttackParallel(E_start, P2, Q2, EB, PB, QB, two_i, num_cores)
+def RunAttack(num_cores):
+    return CastryckDecruAttack(E_start, P2, Q2, EB, PB, QB, two_i, num_cores=num_cores)
 
-else:
-    load('castryck_decru_attack.sage')
-    recovered_key = CastryckDecruAttack(E_start, P2, Q2, EB, PB, QB, two_i)
-
+if __name__ == '__main__' and '__file__' in globals():
+    if '--parallel' in sys.argv:
+        # Set number of cores for parallel computation
+        num_cores = os.cpu_count()
+        print(f"Performing the attack in parallel using {num_cores} cores")
+    else:
+        num_cores = 1
+    recovered_key = RunAttack(num_cores)
 

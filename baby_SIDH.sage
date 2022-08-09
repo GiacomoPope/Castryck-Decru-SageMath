@@ -30,5 +30,19 @@ solution = Integer(bob_private_key).digits(base=3)
 print(f"Running the attack against Baby SIDHp64 parameters, which has a prime: 2^{a}*3^{b} - 1")
 print(f"If all goes well then the following digits should be found: {solution}")
 
-recovered_key = CastryckDecruAttack(E_start, P2, Q2, EB, PB, QB, two_i)
+# ===================================
+# =====  ATTACK  ====================
+# ===================================
+
+def RunAttack(num_cores):
+    return CastryckDecruAttack(E_start, P2, Q2, EB, PB, QB, two_i, num_cores=num_cores)
+
+if __name__ == '__main__' and '__file__' in globals():
+    if '--parallel' in sys.argv:
+        # Set number of cores for parallel computation
+        num_cores = os.cpu_count()
+        print(f"Performing the attack in parallel using {num_cores} cores")
+    else:
+        num_cores = 1
+    recovered_key = RunAttack(num_cores)
 
