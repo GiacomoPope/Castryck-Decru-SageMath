@@ -29,6 +29,16 @@ Running `sage baby_SIDH.sage` on a laptop recovers Bob's private key in less tha
     * Modify line 12: `NIST_submission = "SIKEp610"` for an attack against `SIKEp610`
     * Modify line 12: `NIST_submission = "SIKEp751"` for an attack against `SIKEp751`
 
+### Parallelism
+
+You can now run the attack in parallel thanks to ork by Lorenz Panny. 
+
+* To run the `SIKEp434.sage` on all available cores, run `sage SIKEp434.sage --parallel`. 
+* To choose the number of cores you want to use, edit line `49` in `SIKEp434.sage`. 
+  * If someone wants to make a nice CLI please feel free to make a pull request.
+  
+Essentially, we can guess the first $\beta_1$ digits in parallel (which has a dramatic improvement for higher level NIST parameters) and then guess both $j=0$ and $j=1$ in parallel rather than in serial for the remaining digits. This means we expect an approximate 2x speed up for `SIKEp434` and even more for higher levels.
+
 ## Estimating the running time
 
 We can estimate an average running time from the expected number of calls to the oracle `Does22ChainSplit()`. 
