@@ -307,20 +307,32 @@ def OddCyclicSumOfSquares(n, factexpl, provide_own_fac):
 
 def Pushing3Chain(E, P, i):
     """
-    Compute chain of isogenies quotienting 
+    Compute chain of isogenies quotienting
     out a point P of order 3^i
+
+    https://trac.sagemath.org/ticket/34239
     """
-    chain = []
-    C = E
-    remainingker = P
-    # for j in [1..i] do
-    for j in range(1, i+1):
-        ker = 3^(i-j)*remainingker
-        comp = EllipticCurveIsogeny(C, [ker], degree=3, check=False)
-        C = comp.codomain()
-        remainingker = comp(remainingker)
-        chain.append(comp)
-    return C, chain
+    def rec(Q, k):
+        assert k
+        if k == 1:  # base case
+#            assert Q and not 3*Q
+            return [EllipticCurveIsogeny(Q.curve(), Q, degree=3, check=False)]
+
+        k1 = int(k * .8 + .5)
+        k1 = max(1, min(k-1, k1))  # clamp to [1, k-1]
+
+        Q1 = 3^k1 * Q
+        L = rec(Q1, k-k1)
+
+        Q2 = Q
+        for psi in L:
+            Q2 = psi(Q2)
+        R = rec(Q2, k1)
+
+        return L + R
+
+    chain = rec(P, i)
+    return chain[-1].codomain(), chain
 
 def AuxiliaryIsogeny(i, u, v, E_start, P2, Q2, tauhatkernel, two_i):
     """
