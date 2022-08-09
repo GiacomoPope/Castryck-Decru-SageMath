@@ -51,9 +51,8 @@ def CastryckDecruAttack(E_start, P2, Q2, EB, PB, QB, two_i):
         print(f"Testing digits: {[first_digits[k] for k in range(bet1)]}")
 
         # tauhatkernel = 3^bi*P3 + sum([3^(k-1)*j[k-1] for k in range(1,beta+1)])*3^bi*Q3
-        tauhatkernel = 3^bi*P3 
-        for k in range(1, bet1+1):
-            tauhatkernel += (3^(k-1)*first_digits[k-1])*3^bi*Q3
+        scalar = sum(3^k*d for k,d in enumerate(first_digits))
+        tauhatkernel = 3^bi * (P3 + scalar*Q3)
 
         tauhatkernel_distort = u*tauhatkernel + v*two_i(tauhatkernel)
 
@@ -108,10 +107,8 @@ def CastryckDecruAttack(E_start, P2, Q2, EB, PB, QB, two_i):
     for j in range(0,3):
         print(f"Testing digit: {j}")
         # tauhatkernel := 3^bi*P3 + (&+[3^(k-1)*skB[k] : k in [1..i-1]] + 3^(i-1)*j)*3^bi*Q3;
-        tauhatkernel = 3^bi*P3 
-        for k in range(1, i):
-            tauhatkernel += (3^(k-1)*skB[k-1])*3^bi*Q3
-        tauhatkernel += 3^(i-1)*j*3^bi*Q3
+        scalar = sum(3^k*d for k,d in enumerate(skB)) + 3^(i-1)*j
+        tauhatkernel = 3^bi * (P3 + scalar*Q3)
 
         C, P_c, Q_c = AuxiliaryIsogeny(i, u, v, E_start, P2, Q2, tauhatkernel, two_i)
 
@@ -176,10 +173,8 @@ def CastryckDecruAttack(E_start, P2, Q2, EB, PB, QB, two_i):
                 break
 
             # tauhatkernel := 3^bi*P3 + (&+[3^(k-1)*skB[k] : k in [1..i-1]] + 3^(i-1)*j)*3^bi*Q3;
-            tauhatkernel = 3^bi*P3 
-            for k in range(1, i):
-                tauhatkernel += (3^(k-1)*skB[k-1])*3^bi*Q3
-            tauhatkernel += 3^(i-1)*j*3^bi*Q3
+            scalar = sum(3^k*d for k,d in enumerate(skB)) + 3^(i-1)*j
+            tauhatkernel = 3^bi * (P3 + scalar * Q3)
 
             C, P_c, Q_c = AuxiliaryIsogeny(i, u, v, E_start, P2, Q2, tauhatkernel, two_i)
 
