@@ -15,7 +15,8 @@ def possibly_parallel(num_cores):
             def _fun(args):
                 for a in args:
                     yield ((a,), None), fun(a)
-            return _wrap
+            return _fun
+        return _wrap
     return parallel(num_cores)
 
 def CastryckDecruAttack(E_start, P2, Q2, EB, PB, QB, two_i, num_cores=1):
