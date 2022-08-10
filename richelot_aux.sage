@@ -1,14 +1,8 @@
 set_verbose(-1)
 
-def Coefficient(h, n):
-    """
-    Helper function to make things look similar!
-    """
-    return h[n]
-
 def FromProdToJac(C, E, P_c, Q_c, P, Q, a):
     Fp2 = C.base()
-    R.<x> = PolynomialRing(Fp2)
+    R.<x> = Fp2[]
 
     P_c2 = 2^(a-1)*P_c
     Q_c2 = 2^(a-1)*Q_c
@@ -31,8 +25,8 @@ def FromProdToJac(C, E, P_c, Q_c, P, Q, a):
     A = Deltbet*a1/a2
     B = Deltalp*b1/b2
 
-    h  = - (A*(alp2 - alp1)*(alp1 - alp3)*x^2 + B*(bet2 - bet1)*(bet1 - bet3)) 
-    h *=   (A*(alp3 - alp2)*(alp2 - alp1)*x^2 + B*(bet3 - bet2)*(bet2 - bet1)) 
+    h  = - (A*(alp2 - alp1)*(alp1 - alp3)*x^2 + B*(bet2 - bet1)*(bet1 - bet3))
+    h *=   (A*(alp3 - alp2)*(alp2 - alp1)*x^2 + B*(bet3 - bet2)*(bet2 - bet1))
     h *=   (A*(alp1 - alp3)*(alp3 - alp2)*x^2 + B*(bet1 - bet3)*(bet3 - bet2))
 
     t1 = -(A/B)*b2/b1
@@ -218,8 +212,7 @@ def jacobian_iter_double(h, u, v, n):
 def FromJacToJac(h, D11, D12, D21, D22, a, powers=None):
     # power is an optional list of precomputed tuples
     # (l, 2^l D1, 2^l D2) where l < a are increasing
-    R = h.parent()
-    x = R.gen()
+    R,x = h.parent().objgen()
     Fp2 = R.base()
 
     #J = HyperellipticCurve(h).jacobian()
@@ -256,9 +249,7 @@ def FromJacToJac(h, D11, D12, D21, D22, a, powers=None):
     G3, r3 = h.quo_rem(G1 * G2)
     assert r3 == 0
 
-    delta = Matrix(Fp2, 3, 3, [Coefficient(G1, 0), Coefficient(G1, 1), Coefficient(G1, 2),
-                              Coefficient(G2, 0), Coefficient(G2, 1), Coefficient(G2, 2),
-                              Coefficient(G3, 0), Coefficient(G3, 1), Coefficient(G3, 2)])
+    delta = Matrix(G.padded_list(3) for G in (G1,G2,G3))
     # H1 = 1/det (G2[1]*G3[0] - G2[0]*G3[1])
     #        +2x (G2[2]*G3[0] - G3[2]*G2[0])
     #        +x^2(G2[1]*G3[2] - G3[1]*G2[2])
@@ -281,9 +272,8 @@ def FromJacToJac(h, D11, D12, D21, D22, a, powers=None):
     return hnew, imD1[0], imD1[1], imD2[0], imD2[1], next_powers
 
 def Does22ChainSplit(C, E, P_c, Q_c, P, Q, a):
-    Fp2 = C.base()
     # gluing step
-    h, D11, D12, D21, D22 = FromProdToJac(C, E, P_c, Q_c, P, Q, a);
+    h, D11, D12, D21, D22 = FromProdToJac(C, E, P_c, Q_c, P, Q, a)
     next_powers = None
     # print(f"order 2^{a-1} on hyp curve {h}")
     for i in range(1,a-2+1):
@@ -296,11 +286,8 @@ def Does22ChainSplit(C, E, P_c, Q_c, P, Q, a):
     G3 = h // (G1*G2)
     # print(G1, G2, G3)
 
-    delta = Matrix(Fp2, 3, 3, [Coefficient(G1, 0), Coefficient(G1, 1), Coefficient(G1, 2),
-                               Coefficient(G2, 0), Coefficient(G2, 1), Coefficient(G2, 2),
-                               Coefficient(G3, 0), Coefficient(G3, 1), Coefficient(G3, 2)])
-    delta = delta.determinant();
-    return delta == 0
+    delta = Matrix(G.padded_list(3) for G in (G1,G2,G3))
+    return not delta.determinant()
 
 def OddCyclicSumOfSquares(n, factexpl, provide_own_fac):
     return NotImplemented
@@ -336,14 +323,14 @@ def Pushing3Chain(E, P, i):
 
 def AuxiliaryIsogeny(i, u, v, E_start, P2, Q2, tauhatkernel, two_i):
     """
-    Compute the distored  kernel using precomputed u,v and the 
+    Compute the distored  kernel using precomputed u,v and the
     automorphism two_i.
 
     This is used to construct the curve C from E_start and we
     compute the image of the points P_c and Q_c
     """
     tauhatkernel_distort = u*tauhatkernel + v*two_i(tauhatkernel)
-    
+
     C, tau_tilde = Pushing3Chain(E_start, tauhatkernel_distort, i)
     P_c = u*P2 + v*two_i(P2)
     Q_c = u*Q2 + v*two_i(Q2)

@@ -1,14 +1,7 @@
-def generate_automorphism(E):
-    phi = EllipticCurveIsogeny(E, x)
-    E1728 = phi.codomain()
-    # Speeds things up in Sage
-    E1728.set_order((p+1)^2, num_checks=0)
-
-    for iota in E1728.automorphisms():
-        P = E1728.random_point()
-        if iota(iota(P)) == -P:
-            two_i = -phi.dual()*iota*phi
-            return two_i
+def generate_distortion_map(E):
+    if E.a_invariants() != (0,6,0,1,0):
+        raise NotImplementedError
+    return E.isogeny(E.lift_x(1), codomain=E)
 
 def generate_torsion_points(E, a, b):
     def get_l_torsion_basis(E, l):
