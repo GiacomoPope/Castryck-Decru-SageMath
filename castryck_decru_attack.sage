@@ -24,28 +24,20 @@ def CastryckDecruAttack(E_start, P2, Q2, EB, PB, QB, two_i, num_cores=1):
     skB = [] # TERNARY DIGITS IN EXPANSION OF BOB'S SECRET KEY
 
     # gathering the alpha_i, u, v from table
-
     expdata = [[0, 0, 0] for _ in range(b-3)]
-    # for i in [1..b-3] do
-    for i in range(1,b-2):
-        # if IsOdd(b-i) then
-        if (b-i)%2 == 1:
-            index = (b - i + 1) // 2
-            exp = uvtable[index-1][1]
-            if exp <= a:
-                u = uvtable[index-1][2]
-                v = uvtable[index-1][3]
-                expdata[i-1] = [exp, u, v]
+    for i in range(b%2, b-3, 2):
+        index = (b-i) // 2
+        row = uvtable[index-1]
+        if row[1] <= a:
+            expdata[i] = row[1:4]
 
     # gather digits until beta_1
     bet1 = 0
-    while expdata[bet1][0] == 0:
+    while not expdata[bet1][0]:
         bet1 += 1
     bet1 += 1
 
-    ai = expdata[bet1-1][0]
-    u  = expdata[bet1-1][1]
-    v  = expdata[bet1-1][2]
+    ai,u,v = expdata[bet1-1]
 
     print(f"Determination of first {bet1} ternary digits. We are working with 2^{ai}-torsion.")
 
@@ -56,7 +48,6 @@ def CastryckDecruAttack(E_start, P2, Q2, EB, PB, QB, two_i, num_cores=1):
     def CheckGuess(first_digits):
         print(f"Testing digits: {first_digits}")
 
-        # tauhatkernel = 3^bi*P3 + sum([3^(k-1)*j[k-1] for k in range(1,beta+1)])*3^bi*Q3
         scalar = sum(3^k*d for k,d in enumerate(first_digits))
         tauhatkernel = 3^bi * (P3 + scalar*Q3)
 
@@ -66,12 +57,10 @@ def CastryckDecruAttack(E_start, P2, Q2, EB, PB, QB, two_i, num_cores=1):
 
         return Does22ChainSplit(C, EB, 2^alp*P_c, 2^alp*Q_c, 2^alp*PB, 2^alp*QB, ai)
 
-    guesses = [i.digits(3, padto=bet1) for i in [0..3^bet1-2]]
+    guesses = [ZZ(i).digits(3, padto=bet1) for i in range(3^bet1-1)]
 
     for result in CheckGuess(guesses):
         ((first_digits,), _), is_split = result
-
-        # if j eq <2 : k in [1..bet1]> or Does22ChainSplit(C, EB, 2^alp*P_c, 2^alp*Q_c, 2^alp*PB, 2^alp*QB, ai) then
         if is_split:
             print("Glue-and-split! These are most likely the secret digits.")
             skB += first_digits
@@ -86,9 +75,8 @@ def CastryckDecruAttack(E_start, P2, Q2, EB, PB, QB, two_i, num_cores=1):
     # now compute longest prolongation of Bob's isogeny that may be needed
     length = 1
     max_length = 0
-    # for i in [bet1+1..b-3] do
-    for i in range(bet1 + 1, b - 2):
-      if expdata[i-1][0] != 0:
+    for i in range(bet1, b-3):
+      if expdata[i][0]:
         max_length = max(length, max_length)
         length = 0
       else:
@@ -125,8 +113,7 @@ def CastryckDecruAttack(E_start, P2, Q2, EB, PB, QB, two_i, num_cores=1):
     def CheckGuess(j):
         print(f"Testing digit: {j}")
 
-        # tauhatkernel := 3^bi*P3 + (&+[3^(k-1)*skB[k] : k in [1..i-1]] + 3^(i-1)*j)*3^bi*Q3;
-        scalar = sum(3^k*d for k,d in enumerate(skB)) + 3^(i-1)*j
+        scalar = sum(3^k*d for k,d in enumerate(skB + [j]))
         tauhatkernel = 3^bi * (P3 + scalar*Q3)
 
         C, P_c, Q_c = AuxiliaryIsogeny(i, u, v, E_start, P2, Q2, tauhatkernel, two_i)
@@ -160,14 +147,11 @@ def CastryckDecruAttack(E_start, P2, Q2, EB, PB, QB, two_i, num_cores=1):
 
     # now gather all remaining digits, except for last three (we close that gap by trial and error)
 
-    # for i in [next_i..b-3] do
     for i in range(next_i, b-2):
         bi = b - i
-        if expdata[i-1][0] != 0:
-            ai = expdata[i-1][0]
+        if expdata[i-1][0]:
+            ai,u,v = expdata[i-1]
             alp = a - ai
-            u = expdata[i-1][1]
-            v = expdata[i-1][2]
             prolong = 0
         else:
             prolong += 1
@@ -190,8 +174,7 @@ def CastryckDecruAttack(E_start, P2, Q2, EB, PB, QB, two_i, num_cores=1):
         def CheckGuess(j):
             print(f"Testing digit: {j}")
 
-            # tauhatkernel := 3^bi*P3 + (&+[3^(k-1)*skB[k] : k in [1..i-1]] + 3^(i-1)*j)*3^bi*Q3;
-            scalar = sum(3^k*d for k,d in enumerate(skB)) + 3^(i-1)*j
+            scalar = sum(3^k*d for k,d in enumerate(skB + [j]))
             tauhatkernel = 3^bi * (P3 + scalar * Q3)
 
             C, P_c, Q_c = AuxiliaryIsogeny(i, u, v, E_start, P2, Q2, tauhatkernel, two_i)
@@ -200,12 +183,12 @@ def CastryckDecruAttack(E_start, P2, Q2, EB, PB, QB, two_i, num_cores=1):
 
         for result in CheckGuess([0,1]):
             ((j,), _), is_split = result
-
             if is_split:
                 print("Glue-and-split! This is most likely the secret digit.")
                 skB.append(j)
                 print(skB)
                 break
+
         else:
             print("All other guesses failed, so the digit must be 2")
             skB.append(2)
@@ -221,6 +204,8 @@ def CastryckDecruAttack(E_start, P2, Q2, EB, PB, QB, two_i, num_cores=1):
         bobskey = key + i*3^(b-3)
         bobscurve, _ = Pushing3Chain(E_start, P3 + bobskey*Q3, b)
         return bobscurve.j_invariant() == EB.j_invariant()
+
+    print(f"Determination of last {3} ternary digits. We are brute-forcing this.")
 
     for result in CheckGuess([0..3^3]):
         ((i,), _), found = result
@@ -238,4 +223,4 @@ def CastryckDecruAttack(E_start, P2, Q2, EB, PB, QB, two_i, num_cores=1):
     else:
         print("Something went wrong.")
         print(f"Altogether this took {time.time() - tim} seconds.")
-        return 0
+        return None

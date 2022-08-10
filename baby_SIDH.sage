@@ -14,8 +14,8 @@ R.<x> = PolynomialRing(Fp2)
 E_start = EllipticCurve(Fp2, [0,6,0,1,0])
 E_start.set_order((p+1)^2) # Speeds things up in Sage
 
-# Naive generation of the automorphism 2i 
-two_i = generate_automorphism(E_start)
+# Generation of the endomorphism 2i
+two_i = generate_distortion_map(E_start)
 
 # Generate public torsion points, for SIKE implementations
 # these are fixed but to save loading in constants we can
