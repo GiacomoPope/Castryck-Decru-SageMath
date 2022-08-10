@@ -2,62 +2,52 @@ set_verbose(-1)
 
 def FromProdToJac(C, E, P_c, Q_c, P, Q, a):
     Fp2 = C.base()
-    R.<x> = Fp2[]
+    Rx.<x> = Fp2[]
 
     P_c2 = 2^(a-1)*P_c
     Q_c2 = 2^(a-1)*Q_c
     P2 = 2^(a-1)*P
     Q2 = 2^(a-1)*Q
 
-    alp1 = P_c2[0]
-    alp2 = Q_c2[0]
-    alp3 = (P_c2 + Q_c2)[0]
-    bet1 = P2[0]
-    bet2 = Q2[0]
-    bet3 = (P2 + Q2)[0]
-    a1 = (alp3 - alp2)^2/(bet3 - bet2) + (alp2 - alp1)^2/(bet2 - bet1) + (alp1 - alp3)^2/(bet1 - bet3)
-    b1 = (bet3 - bet2)^2/(alp3 - alp2) + (bet2 - bet1)^2/(alp2 - alp1) + (bet1 - bet3)^2/(alp1 - alp3)
-    a2 = alp1*(bet3 - bet2) + alp2*(bet1 - bet3) + alp3*(bet2 - bet1)
-    b2 = bet1*(alp3 - alp2) + bet2*(alp1 - alp3) + bet3*(alp2 - alp1)
-    Deltalp = (alp1 - alp2)^2*(alp1 - alp3)^2*(alp2 - alp3)^2
-    Deltbet = (bet1 - bet2)^2*(bet1 - bet3)^2*(bet2 - bet3)^2
+    a1, a2, a3 = P_c2[0], Q_c2[0], (P_c2 + Q_c2)[0]
+    b1, b2, b3 = P2[0], Q2[0], (P2 + Q2)[0]
 
-    A = Deltbet*a1/a2
-    B = Deltalp*b1/b2
+    # Compute coefficients
+    M = Matrix(Fp2, [
+        [a1*b1, a1, b1],
+        [a2*b2, a2, b2],
+        [a3*b3, a3, b3]])
+    R, S, T = M.inverse() * vector(Fp2, [1,1,1])
+    RD = R * M.determinant()
+    da = (a1 - a2)*(a2 - a3)*(a3 - a1)
+    db = (b1 - b2)*(b2 - b3)*(b3 - b1)
 
-    h  = - (A*(alp2 - alp1)*(alp1 - alp3)*x^2 + B*(bet2 - bet1)*(bet1 - bet3))
-    h *=   (A*(alp3 - alp2)*(alp2 - alp1)*x^2 + B*(bet3 - bet2)*(bet2 - bet1))
-    h *=   (A*(alp1 - alp3)*(alp3 - alp2)*x^2 + B*(bet1 - bet3)*(bet3 - bet2))
+    s1, t1 = - da / RD, db / RD
+    s2, t2 = -T/R, -S/R
 
-    t1 = -(A/B)*b2/b1
-    t2 = (bet1*(bet3 - bet2)^2/(alp3 - alp2) + bet2*(bet1 - bet3)^2/(alp1 - alp3) + bet3*(bet2 - bet1)^2/(alp2 - alp1))/b1
-    s1 = -(B/A)*a2/a1
-    s2 = (alp1*(alp3 - alp2)^2/(bet3 - bet2) + alp2*(alp1 - alp3)^2/(bet1 - bet3) + alp3*(alp2 - alp1)^2/(bet2 - bet1))/a1
+    a1_t = (a1 - s2) / s1
+    a2_t = (a2 - s2) / s1
+    a3_t = (a3 - s2) / s1
+    h = s1 * (x^2 - a1_t) * (x^2 - a2_t) * (x^2 - a3_t)
 
     H = HyperellipticCurve(h)
     J = H.jacobian()
-
-    # We need the image of (P_c, P) and (Q_c, Q) in J
-    # The image of (P_c, P) is the image of P_c as a divisor on H
-    # plus the image of P as a divisor on H.
-    # This allows for direct computation without solving equations
-    # as in Castryck-Decru's paper.
 
     def isogeny(pair):
         # Argument members may be None to indicate the zero point.
 
         # The projection maps are:
-        # H->C: (xC = s1/x²+s2, yC = (Deltbet/A³)(y/x³))
+        # H->C: (xC = s1/x²+s2, yC = s1 y)
         # so we compute Mumford coordinates of the divisor f^-1(P_c): a(x), y-b(x)
         Pc, P = pair
         if Pc:
             xPc, yPc = Pc.xy()
-            JPc = J([x^2 - s1 / (xPc - s2), yPc * x^3 * A^3 / Deltbet])
+            JPc = J([s1 * x^2 + s2 - xPc, Rx(yPc / s1)])
         # Same for E
-        # H->E: (xE = t1 x² + t2, yE = (Deltalp/B³)y)
+        # H->E: (xE = t1 x² + t2, yE = t1 y/x^3)
         if P:
             xP, yP = P.xy()
-            JP = J([t1* x^2 + t2 - xP, R(yP * B^3 / Deltalp)])
+            JP = J([(xP - t2) * x^2 - t1, yP * x^3 / t1])
         if Pc and P:
             return JPc + JP
         if Pc:
@@ -68,12 +58,11 @@ def FromProdToJac(C, E, P_c, Q_c, P, Q, a):
     imPcP = isogeny((P_c, P))
     imQcQ = isogeny((Q_c, Q))
 
-    # Validate result
-    # For debugging
+    # Validate result, for debugging
     # def projC(_x, _y):
-    #     return (s1 / _x^2 + s2, Deltbet / A^3 * _y / _x^3)
+    #     return (s1 * _x^2 + s2, s1 * _y)
     # def projE(_x, _y):
-    #     return (t1 * _x^2 + t2, Deltalp / B^3 * _y)
+    #     return (t1 / _x^2 + t2, t1 * _y / _x^3)
     # Fp4 = Fp2.extension(2)
     # E4 = E.change_ring(Fp4)
     # C4 = C.change_ring(Fp4)
