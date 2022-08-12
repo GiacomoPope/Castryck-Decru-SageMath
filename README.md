@@ -33,7 +33,7 @@ Running `sage baby_SIDH.sage` on a laptop recovers Bob's private key in less tha
 | Our implementation (SageMath)   | 5 seconds  | 2 minutes  | 10 minutes | 15 minutes  | 25 minutes   | 1-2 hours    |
 | Direct Computation (Oudompheng) | 2 seconds  | 9 seconds  | 22 seconds | 1-4 minutes | 1-20 minutes | 1-30 minutes   |
 
-**Note**: Especially for the higher NIST levels, a lot of time is spent getting the first digits, and so performance time varies based on whether or not the first few values are `0` (fastest) or `2` (slowest). For example, attacking `SIKEp751`, similar hardware has been run multiple times with a compute times ranging from 45 mins to 3 hours. 
+**Note**: Especially for the higher NIST levels, a lot of time is spent getting the first digits, and so performance time varies based on whether or not the first few values are `0` (fastest) or `2` (slowest). 
 
 ### Parameter choice
 
