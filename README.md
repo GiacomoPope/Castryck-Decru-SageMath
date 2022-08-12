@@ -27,11 +27,11 @@ Running `sage baby_SIDH.sage` on a laptop recovers Bob's private key in less tha
 
 ## Breaking SIDH on a Laptop
 
-| ~ Running Time                  | `SIKEp64`  | `$IKEp217` | `SIKEp434` | `SIKEp503` | `SIKEp610` | `SIKEp751`   |
-|---------------------------------|:----------:|------------|------------|------------|------------|--------------|
-| Paper Implementation (Magma)    |   -        | 6 minutes  | 62 minutes | 2h19m      | 8h15m      | 20h37m       |
-| Our implementation (SageMath)   | 5 seconds  | 2 minutes  | 10 minutes | 15 minutes | 25 minutes | 1-2 hours    |
-| Direct Computation (Oudompheng) | 2 seconds  | 9 seconds  | 22 seconds | - | - | 30 minutes   |
+| ~ Running Time                  | `SIKEp64`  | `$IKEp217` | `SIKEp434` | `SIKEp503`  | `SIKEp610`   | `SIKEp751`   |
+|---------------------------------|:----------:|------------|------------|-------------|--------------|--------------|
+| Paper Implementation (Magma)    |   -        | 6 minutes  | 62 minutes | 2h19m       | 8h15m        | 20h37m       |
+| Our implementation (SageMath)   | 5 seconds  | 2 minutes  | 10 minutes | 15 minutes  | 25 minutes   | 1-2 hours    |
+| Direct Computation (Oudompheng) | 2 seconds  | 9 seconds  | 22 seconds | 1-4 minutes | 1-20 minutes | 1-30 minutes   |
 
 **Note**: Especially for the higher NIST levels, a lot of time is spent getting the first digits, and so performance time varies based on whether or not the first few values are `0` (fastest) or `2` (slowest). For example, attacking `SIKEp751`, similar hardware has been run multiple times with a compute times ranging from 45 mins to 3 hours. 
 
@@ -57,7 +57,7 @@ Essentially, we can guess the first $\beta_1$ digits in parallel (which has a dr
 
 Note that this optimization improves latency at the expense of throughput: The overall amount of work is higher, but the attack finishes quicker. Parallelism more fine-grained than simply testing all guesses simultaneously will certainly improve this, but this seems to be much less trivial to implement in SageMath.
 
-## Estimating the running time
+## Estimating the running time (Castryck-Decru Attack)
 
 We can estimate an average running time from the expected number of calls to the oracle `Does22ChainSplit()`. 
 
@@ -83,6 +83,12 @@ $$
 | `SIKEp751`  | 8.4s  | 6         | 1.75 hours  |
 
 Where $c$ has been estimated using a MacBook Pro using a Intel Core i7 CPU @ 2.6 GHz. **Note** as $c$ was benchmarked for the *first* oracle calls, these are over-estimates, as the oracle calls are faster as more digits are collected.
+
+## Estimating the running time (Oudompheng Modification)
+
+```
+Coming soon...
+```
 
 ## Speeding SageMath up using a cache
 
