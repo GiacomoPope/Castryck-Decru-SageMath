@@ -1,5 +1,5 @@
 load('public_values_aux.sage')
-load('castryck_decru_attack.sage')
+load('castryck_decru_shortcut.sage')
 
 # $IKEp217 parameters
 a = 110

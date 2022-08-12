@@ -54,7 +54,7 @@ def CastryckDecruAttack(E_start, P2, Q2, EB, PB, QB, two_i, num_cores=1):
 
         tauhatkernel_distort = u*tauhatkernel + v*two_i(tauhatkernel)
 
-        C, P_c, Q_c = AuxiliaryIsogeny(bet1, u, v, E_start, P2, Q2, tauhatkernel, two_i)
+        C, P_c, Q_c, _ = AuxiliaryIsogeny(bet1, u, v, E_start, P2, Q2, tauhatkernel, two_i)
 
         return Does22ChainSplit(C, EB, 2^alp*P_c, 2^alp*Q_c, 2^alp*PB, 2^alp*QB, ai)
 
@@ -62,7 +62,7 @@ def CastryckDecruAttack(E_start, P2, Q2, EB, PB, QB, two_i, num_cores=1):
 
     for result in CheckGuess(guesses):
         ((first_digits,), _), is_split = result
-        if is_split:
+        if is_split is not None:
             print("Glue-and-split! These are most likely the secret digits.")
             skB += first_digits
             break
@@ -117,7 +117,7 @@ def CastryckDecruAttack(E_start, P2, Q2, EB, PB, QB, two_i, num_cores=1):
         scalar = sum(3^k*d for k,d in enumerate(skB + [j]))
         tauhatkernel = 3^bi * (P3 + scalar*Q3)
 
-        C, P_c, Q_c = AuxiliaryIsogeny(i, u, v, E_start, P2, Q2, tauhatkernel, two_i)
+        C, P_c, Q_c, _ = AuxiliaryIsogeny(i, u, v, E_start, P2, Q2, tauhatkernel, two_i)
 
         return Does22ChainSplit(C, endEB, 2^alp*P_c, 2^alp*Q_c, 2^alp*endPB, 2^alp*endQB, ai)
 
@@ -178,7 +178,7 @@ def CastryckDecruAttack(E_start, P2, Q2, EB, PB, QB, two_i, num_cores=1):
             scalar = sum(3^k*d for k,d in enumerate(skB + [j]))
             tauhatkernel = 3^bi * (P3 + scalar * Q3)
 
-            C, P_c, Q_c = AuxiliaryIsogeny(i, u, v, E_start, P2, Q2, tauhatkernel, two_i)
+            C, P_c, Q_c, _ = AuxiliaryIsogeny(i, u, v, E_start, P2, Q2, tauhatkernel, two_i)
 
             return Does22ChainSplit(C, endEB, 2^alp*P_c, 2^alp*Q_c, 2^alp*endPB, 2^alp*endQB, ai)
 
