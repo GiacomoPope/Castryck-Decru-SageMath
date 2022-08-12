@@ -4,6 +4,21 @@ SageMath implementation of [An efficient key recovery attack on SIDH, with Thoma
 
 **Sage version**: This code was developed using SageMath 9.5, and works on the latest stable version: 9.6. Certain isogeny functions require SageMath 9.5 and above, so if the code does not run, check your current version with `sage --version`.
 
+## Deviation from Castryck-Decru Attack
+
+The latest commit introduces a modification of the Castryck-Decru attack in which only the first $\beta_1$ ternary digits must be guessed. Now, instead of recovering the remaining digits one by one, the secret isogeny is directly calculated from the result of the (2,2)-isogeny chain. 
+
+This modification was introduced in [#12 Implement direct computation of isogeny once the first splitting is found](https://github.com/jack4818/Castryck-Decru-SageMath/pull/19) and was acomplished by [Rémy Oudompheng](https://twitter.com/oudomphe).
+
+A description of the attack is described in: [A note on implementing direct isogeny determination in the Castryck-Decru SIKE attack](https://www.normalesup.org/~oudomphe/textes/202208-castryck-decru-shortcut.pdf).
+
+Additional derivations appear in how the Glue-and-Split computations can be found, which can be seen in the file `richelot_aux.sage` in the functions: 
+
+* `FromProdToJac()`
+* `FromJacToJac()`
+
+Thanks again to [Rémy Oudompheng](https://twitter.com/oudomphe) for deriving and implementing these faster algorithms.
+
 ## Baby Example
 
 During development of the code, we created a weaker parameter set `SIKEp64` with $p = 2^{33}\cdot 3^{19} - 1$. This has the benefit of helping debug our implementation while also giving instant gratification of seeing an attack in real time.
@@ -12,10 +27,11 @@ Running `sage baby_SIDH.sage` on a laptop recovers Bob's private key in less tha
 
 ## Breaking SIDH on a Laptop
 
-| ~ Running Time                | `SIKEp64`  | `$IKEp217` | `SIKEp434` | `SIKEp503` | `SIKEp610` | `SIKEp751`   |
-|-------------------------------|:----------:|------------|------------|------------|------------|--------------|
-| Paper Implementation (Magma)  |   -        | 6 minutes  | 62 minutes | 2h19m      | 8h15m      | 20h37m       |
-| Our implementation (SageMath) | 5 seconds  | 2 minutes  | 10 minutes | 15 minutes | 25 minutes | 1-2 hours    |
+| ~ Running Time                  | `SIKEp64`  | `$IKEp217` | `SIKEp434` | `SIKEp503` | `SIKEp610` | `SIKEp751`   |
+|---------------------------------|:----------:|------------|------------|------------|------------|--------------|
+| Paper Implementation (Magma)    |   -        | 6 minutes  | 62 minutes | 2h19m      | 8h15m      | 20h37m       |
+| Our implementation (SageMath)   | 5 seconds  | 2 minutes  | 10 minutes | 15 minutes | 25 minutes | 1-2 hours    |
+| Direct Computation (Oudompheng) | 2 seconds  | 9 seconds  | 22 seconds | - | - | 30 minutes   |
 
 **Note**: Especially for the higher NIST levels, a lot of time is spent getting the first digits, and so performance time varies based on whether or not the first few values are `0` (fastest) or `2` (slowest). For example, attacking `SIKEp751`, similar hardware has been run multiple times with a compute times ranging from 45 mins to 3 hours. 
 
@@ -67,18 +83,6 @@ $$
 | `SIKEp751`  | 8.4s  | 6         | 1.75 hours  |
 
 Where $c$ has been estimated using a MacBook Pro using a Intel Core i7 CPU @ 2.6 GHz. **Note** as $c$ was benchmarked for the *first* oracle calls, these are over-estimates, as the oracle calls are faster as more digits are collected.
-
-
-## Deviation from Castryck-Decru Attack
-
-Roughly: points are now directly computed rather than derived by solving equations. This means we can avoid the very slow Grobner basis computation which Sage uses.
-
-Deviation can be see in the file `richelot_aux.sage` in the functions: 
-
-* `FromProdToJac()`
-* `FromJacToJac()`
-
-Thanks to [Rémy Oudompheng](https://twitter.com/oudomphe) for deriving and implementing these algorithms.
 
 ## Speeding SageMath up using a cache
 
