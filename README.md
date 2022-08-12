@@ -27,11 +27,11 @@ Running `sage baby_SIDH.sage` on a laptop recovers Bob's private key in less tha
 
 ## Breaking SIDH on a Laptop
 
-| ~ Running Time                  | `SIKEp64`  | `$IKEp217` | `SIKEp434` | `SIKEp503`  | `SIKEp610`   | `SIKEp751`   |
-|---------------------------------|:----------:|------------|------------|-------------|--------------|--------------|
-| Paper Implementation (Magma)    |   -        | 6 minutes  | 62 minutes | 2h19m       | 8h15m        | 20h37m       |
-| Our implementation (SageMath)   | 5 seconds  | 2 minutes  | 10 minutes | 15 minutes  | 25 minutes   | 1-2 hours    |
-| Direct Computation (Oudompheng) | 2 seconds  | 9 seconds  | 22 seconds | 1-4 minutes | 1-20 minutes | 1-30 minutes   |
+| ~ Running Time                  | `SIKEp64`  | `$IKEp217` | `SIKEp434` | `SIKEp503`  | `SIKEp610`   | `SIKEp751`                     |
+|---------------------------------|:----------:|------------|------------|-------------|--------------|--------------------------------|
+| Paper Implementation (Magma)    |   -        | 6 minutes  | 62 minutes | 2h19m       | 8h15m        | 20h37m                         |
+| Our implementation (SageMath)   | 5 seconds  | 2 minutes  | 10 minutes | 15 minutes  | 25 minutes   | 1-2 hours                      |
+| Direct Computation (Oudompheng) | 2 seconds  | 9 seconds  | 22 seconds | 1-4 minutes | 1-30 minutes | 1 min - 2 hours (Worst case)   |
 
 **Note**: Especially for the higher NIST levels, a lot of time is spent getting the first digits, and so performance time varies based on whether or not the first few values are `0` (fastest) or `2` (slowest). 
 
