@@ -119,14 +119,15 @@ def CastryckDecruAttack(E_start, P2, Q2, EB, PB, QB, two_i, num_cores=1):
         tauhatkernel_distort = u*tauhatkernel + v*two_i(tauhatkernel)
 
         C, P_c, Q_c, chainC = AuxiliaryIsogeny(bet1, u, v, E_start, P2, Q2, tauhatkernel, two_i)
-
         # We have a diagram
-        #  C <- E_start
+        #  C <- Eguess <- E_start
         #  |    |
         #  v    v
         #  CB-> EB
         split = Does22ChainSplit(C, EB, 2^alp*P_c, 2^alp*Q_c, 2^alp*PB, 2^alp*QB, ai)
         if split:
+            Eguess, _ = Pushing3Chain(E_start, tauhatkernel, bet1)
+
             chain, (E1, E2) = split
             # Compute the 3^b torsion in C
             P3c = chainC(P3)
@@ -147,48 +148,49 @@ def CastryckDecruAttack(E_start, P2, Q2, EB, PB, QB, two_i, num_cores=1):
             # The projection of either E1 or E2 must have 3-adic rank 1.
             # To compute the kernel we choose a symplectic basis of the
             # 3-torsion at the destination, and compute Weil pairings.
-
-            print("Trying to compute kernel to E1")
-            E1.set_order((p+1)^2) # keep checks
-            P_E1, Q_E1 = supersingular_gens(E1)
-            P3_E1 = ((p+1) / 3^b) * P_E1
-            Q3_E1 = ((p+1) / 3^b) * Q_E1
-            w = P3_E1.weil_pairing(Q3_E1, 3^b)
-            # Compute matrix and check for kernel
-            M11 = fast_log3(P3c_E1.weil_pairing(P3_E1, 3^b), w)
-            M12 = fast_log3(P3c_E1.weil_pairing(Q3_E1, 3^b), w)
-            M21 = fast_log3(Q3c_E1.weil_pairing(P3_E1, 3^b), w)
-            M22 = fast_log3(Q3c_E1.weil_pairing(Q3_E1, 3^b), w)
-            if Z3(M11*M22-M12*M21) == 0:
-                print("Found kernel after split to E1")
-                #print(M)
-                if M21 % 3 != 0:
-                    sk = int(-Z3(M11)/Z3(M21))
-                    return sk
-                elif M22 % 3 != 0:
-                    sk = int(-Z3(M12)/Z3(M22))
-                    return sk
-
-            print("Trying to compute kernel to E2")
-            E2.set_order((p+1)^2) # keep checks
-            P_E2, Q_E2 = supersingular_gens(E2)
-            P3_E2 = ((p+1) / 3^b) * P_E2
-            Q3_E2 = ((p+1) / 3^b) * Q_E2
-            w = P3_E2.weil_pairing(Q3_E2, 3^b)
-            # Compute matrix
-            M11 = fast_log3(P3c_E2.weil_pairing(P3_E2, 3^b), w)
-            M12 = fast_log3(P3c_E2.weil_pairing(Q3_E2, 3^b), w)
-            M21 = fast_log3(Q3c_E2.weil_pairing(P3_E2, 3^b), w)
-            M22 = fast_log3(Q3c_E2.weil_pairing(Q3_E2, 3^b), w)
-            if Z3(M11*M22-M12*M21) == 0:
-                print("Found kernel after split to E2")
-                #print(M)
-                if M21 % 3 != 0:
-                    sk = int(-Z3(M11)/Z3(M21))
-                    return sk
-                elif M22 % 3 != 0:
-                    sk = int(-Z3(M12)/Z3(M22))
-                    return sk
+            if E2.j_invariant() == Eguess.j_invariant():
+                # Correct projection is to E1
+                print("Trying to compute kernel to E1")
+                E1.set_order((p+1)^2) # keep checks
+                P_E1, Q_E1 = supersingular_gens(E1)
+                P3_E1 = ((p+1) / 3^b) * P_E1
+                Q3_E1 = ((p+1) / 3^b) * Q_E1
+                w = P3_E1.weil_pairing(Q3_E1, 3^b)
+                # Compute matrix and check for kernel
+                M11 = fast_log3(P3c_E1.weil_pairing(P3_E1, 3^b), w)
+                M12 = fast_log3(P3c_E1.weil_pairing(Q3_E1, 3^b), w)
+                M21 = fast_log3(Q3c_E1.weil_pairing(P3_E1, 3^b), w)
+                M22 = fast_log3(Q3c_E1.weil_pairing(Q3_E1, 3^b), w)
+                if Z3(M11*M22-M12*M21) == 0:
+                    print("Found kernel after split to E1")
+                    #print(M)
+                    if M21 % 3 != 0:
+                        sk = int(-Z3(M11)/Z3(M21))
+                        return sk
+                    elif M22 % 3 != 0:
+                        sk = int(-Z3(M12)/Z3(M22))
+                        return sk
+            else:
+                print("Trying to compute kernel to E2")
+                E2.set_order((p+1)^2) # keep checks
+                P_E2, Q_E2 = supersingular_gens(E2)
+                P3_E2 = ((p+1) / 3^b) * P_E2
+                Q3_E2 = ((p+1) / 3^b) * Q_E2
+                w = P3_E2.weil_pairing(Q3_E2, 3^b)
+                # Compute matrix
+                M11 = fast_log3(P3c_E2.weil_pairing(P3_E2, 3^b), w)
+                M12 = fast_log3(P3c_E2.weil_pairing(Q3_E2, 3^b), w)
+                M21 = fast_log3(Q3c_E2.weil_pairing(P3_E2, 3^b), w)
+                M22 = fast_log3(Q3c_E2.weil_pairing(Q3_E2, 3^b), w)
+                if Z3(M11*M22-M12*M21) == 0:
+                    print("Found kernel after split to E2")
+                    #print(M)
+                    if M21 % 3 != 0:
+                        sk = int(-Z3(M11)/Z3(M21))
+                        return sk
+                    elif M22 % 3 != 0:
+                        sk = int(-Z3(M12)/Z3(M22))
+                        return sk
 
             return True
 
