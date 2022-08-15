@@ -1,4 +1,6 @@
-load('public_values_aux.sage')
+import public_values_aux
+from public_values_aux import *
+
 load('castryck_decru_shortcut.sage')
 
 SIKE_parameters = {
@@ -18,6 +20,7 @@ print(f"Generating public data for the attack...")
 # Set the prime, finite fields and starting curve
 # with known endomorphism
 p = 2^a*3^b - 1
+public_values_aux.p = p
 Fp2.<i> = GF(p^2, modulus=x^2+1)
 R.<x> = PolynomialRing(Fp2)
 
@@ -34,7 +37,7 @@ P2, Q2, P3, Q3 = generate_torsion_points(E_start, a, b)
 check_torsion_points(E_start, a, b, P2, Q2, P3, Q3)
 
 # Generate Bob's key pair
-bob_private_key, EB, PB, QB = gen_bob_keypair(E_start, P2, Q2, P3, Q3)
+bob_private_key, EB, PB, QB = gen_bob_keypair(E_start, b, P2, Q2, P3, Q3)
 solution = Integer(bob_private_key).digits(base=3)
 
 print(f"If all goes well then the following digits should be found: {solution}")
