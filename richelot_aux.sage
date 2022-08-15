@@ -399,7 +399,7 @@ def Does22ChainSplit(C, E, P_c, Q_c, P, Q, a):
 
     delta = Matrix(G.padded_list(3) for G in (G1,G2,G3))
     if delta.determinant():
-        return False
+        return None
 
     # Finish chain
     f, codomain = FromJacToProd(G1, G2, G3)
