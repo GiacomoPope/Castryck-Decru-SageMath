@@ -61,64 +61,36 @@ def CastryckDecruAttack(E_start, P2, Q2, EB, PB, QB, two_i, num_cores=1):
             P3c = chainC(P3)
             Q3c = chainC(Q3)
             # Map it through the (2,2)-isogeny chain
+            if E2.j_invariant() == Eguess.j_invariant():
+                CB, index = E1, 0
+            else:
+                CB, index = E2, 1
             def apply_chain(c, X):
-                #print("chain start", X)
+                X = (X, None) # map point to C x {O_EB}
                 for f in c:
                     X = f(X)
-                    #print("=>", X)
-                return X
-            P3c_E1, P3c_E2 = apply_chain(chain, (P3c, None))
-            Q3c_E1, Q3c_E2 = apply_chain(chain, (Q3c, None))
-            print("Computed image of 3-adic torsion in split factors E1xE2")
+                return X[index]
+            print("Computing image of 3-adic torsion in split factor CB")
+            P3c_CB = apply_chain(chain, P3c)
+            Q3c_CB = apply_chain(chain, Q3c)
 
             Z3 = Zmod(3^b)
             # Determine kernel of the 3^b isogeny.
-            # The projection of either E1 or E2 must have 3-adic rank 1.
+            # The projection to CB must have 3-adic rank 1.
             # To compute the kernel we choose a symplectic basis of the
             # 3-torsion at the destination, and compute Weil pairings.
-            if E2.j_invariant() == Eguess.j_invariant():
-                # Correct projection is to E1
-                print("Trying to compute kernel to E1")
-                E1.set_order((p+1)^2) # keep checks
-                P_E1, Q_E1 = supersingular_gens(E1)
-                P3_E1 = ((p+1) / 3^b) * P_E1
-                Q3_E1 = ((p+1) / 3^b) * Q_E1
-                w = P3_E1.weil_pairing(Q3_E1, 3^b)
-                # Compute matrix and check for kernel
-                M11 = fast_log3(P3c_E1.weil_pairing(P3_E1, 3^b), w)
-                M12 = fast_log3(P3c_E1.weil_pairing(Q3_E1, 3^b), w)
-                M21 = fast_log3(Q3c_E1.weil_pairing(P3_E1, 3^b), w)
-                M22 = fast_log3(Q3c_E1.weil_pairing(Q3_E1, 3^b), w)
-                if Z3(M11*M22-M12*M21) == 0:
-                    print("Found kernel after split to E1")
-                    #print(M)
-                    if M21 % 3 != 0:
-                        sk = int(-Z3(M11)/Z3(M21))
-                        return sk
-                    elif M22 % 3 != 0:
-                        sk = int(-Z3(M12)/Z3(M22))
-                        return sk
-            else:
-                print("Trying to compute kernel to E2")
-                E2.set_order((p+1)^2) # keep checks
-                P_E2, Q_E2 = supersingular_gens(E2)
-                P3_E2 = ((p+1) / 3^b) * P_E2
-                Q3_E2 = ((p+1) / 3^b) * Q_E2
-                w = P3_E2.weil_pairing(Q3_E2, 3^b)
-                # Compute matrix
-                M11 = fast_log3(P3c_E2.weil_pairing(P3_E2, 3^b), w)
-                M12 = fast_log3(P3c_E2.weil_pairing(Q3_E2, 3^b), w)
-                M21 = fast_log3(Q3c_E2.weil_pairing(P3_E2, 3^b), w)
-                M22 = fast_log3(Q3c_E2.weil_pairing(Q3_E2, 3^b), w)
-                if Z3(M11*M22-M12*M21) == 0:
-                    print("Found kernel after split to E2")
-                    #print(M)
-                    if M21 % 3 != 0:
-                        sk = int(-Z3(M11)/Z3(M21))
-                        return sk
-                    elif M22 % 3 != 0:
-                        sk = int(-Z3(M12)/Z3(M22))
-                        return sk
+            CB.set_order((p+1)^2, num_checks=1) # keep sanity check
+            P_CB, Q_CB = supersingular_gens(CB)
+            P3_CB = ((p+1) / 3^b) * P_CB
+            Q3_CB = ((p+1) / 3^b) * Q_CB
+            w = P3_CB.weil_pairing(Q3_CB, 3^b)
+            # Compute kernel
+            for G in (P3_CB, Q3_CB):
+                xP = fast_log3(P3c_CB.weil_pairing(G, 3^b), w)
+                xQ = fast_log3(Q3c_CB.weil_pairing(G, 3^b), w)
+                if xQ % 3 != 0:
+                    sk = int(-Z3(xP) / Z3(xQ))
+                    return sk
 
             return True
 
