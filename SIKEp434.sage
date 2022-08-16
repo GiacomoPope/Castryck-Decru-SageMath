@@ -2,12 +2,14 @@ import public_values_aux
 from public_values_aux import *
 
 load('castryck_decru_shortcut.sage')
+load('sandwich_attack.sage')
 
 SIKE_parameters = {
     "SIKEp434" : (216, 137),
     "SIKEp503" : (250, 159),
     "SIKEp610" : (305, 192),
-    "SIKEp751" : (372, 239)
+    "SIKEp751" : (372, 239),
+    "SIKEp964" : (486, 301), # removed after NIST round 1
 }
 
 # Change me to attack different parameter sets
@@ -56,5 +58,12 @@ if __name__ == '__main__' and '__file__' in globals():
         print(f"Performing the attack in parallel using {num_cores} cores")
     else:
         num_cores = 1
-    recovered_key = RunAttack(num_cores)
+
+    if '--sandwich' in sys.argv:
+        # Use the fact that 2^a - 5*3^b is a sum of squares
+        assert NIST_submission == "SIKEp964"
+        assert two_squares(2^a - 5*3^b)
+        recovered_key = SandwichAttack(E_start, P2, Q2, EB, PB, QB, two_i, k=5, alp=0)
+    else:
+        recovered_key = RunAttack(num_cores)
 
