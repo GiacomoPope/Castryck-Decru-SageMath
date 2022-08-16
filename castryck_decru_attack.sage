@@ -1,5 +1,6 @@
 import time
 from itertools import product
+from helpers import possibly_parallel
 
 load('richelot_aux.sage')
 load('uvtable.sage')
@@ -8,16 +9,6 @@ load('speedup.sage')
 # ===================================
 # =====  ATTACK  ====================
 # ===================================
-
-def possibly_parallel(num_cores):
-    if num_cores == 1:
-        def _wrap(fun):
-            def _fun(args):
-                for a in args:
-                    yield ((a,), None), fun(a)
-            return _fun
-        return _wrap
-    return parallel(num_cores)
 
 def CastryckDecruAttack(E_start, P2, Q2, EB, PB, QB, two_i, num_cores=1):
     tim = time.time()
