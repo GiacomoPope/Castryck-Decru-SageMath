@@ -1,9 +1,41 @@
 """
 Demonstrate how to run the attack when c = small_prime*(u^2+v^2)
 This is a mixture of Castryck-Decru and Maino-Martindale
+
+The following variants are implemented:
+Case 7: 2^301-3^188 == 7*(u*u+v*v) (3^4 guesses)
+
+        tau
+    Estart --> Eguess ---> EB
+    | u+iv     |          |
+    v          |          |
+    Estart     |aux       |
+    | phi7     |          |
+    v          v          v
+    E7 ------> C -------> CB
+        tau7
+
+(note that E(p^3) has (p^3+1) points, and a 7-torsion point)
+
+Case 11: 2^305-19*3^189 = 11*(u*u+v*v) (3^3 guesses)
+
+        tau
+    Estart --> Eguess ---> EB ---> EB19
+    | u+iv       |           phi19  |
+    v            |                  |
+    Estart       |aux               |
+    | phi11      |                  |
+    v            v                  v
+    E11 -------> C ---------------> CB
+        tau11
+
+(note that E(p^4) has (p^2-1)^2 points, and a 11-torsion point)
+(note that E(p^9) has p^9+1 points, and a 19-torsion point)
+
 """
 
 import time
+import argparse
 from helpers import possibly_parallel, supersingular_gens, fast_log3
 import public_values_aux
 from public_values_aux import *
@@ -12,6 +44,12 @@ set_verbose(-1)
 
 load('speedup.sage')
 load('richelot_aux.sage')
+
+argp = argparse.ArgumentParser()
+argp.add_argument("--parallel", action="store_true")
+argp.add_argument("--mode", type=int, choices=(7, 11), default=11,
+    help="mode 11 needs 27 guesses, mode 7 needs 81 guesses")
+opts = argp.parse_args()
 
 print("Instantiate E_start...")
 a, b = 305, 192
@@ -30,16 +68,29 @@ two_i = generate_distortion_map(E_start)
 # Choose an outgoing degree 7 isogeny.
 # We don't need to compute a torsion point in GF(p^6),
 # we can factor the division polynomial and use Kohel formulas.
-print("Precompute an isogeny of degree 7 on E_start")
-P7 = E_start.division_polynomial(7)
-ker7, _ = P7.factor()[0]
-phi7 = E_start.isogeny(ker7)
-E7 = phi7.codomain()
-print(phi7)
+if opts.mode == 7:
+    print("Using 2^301-3^188 = 7*(u²+v²) (max guesses = 81)")
+    print("Precompute an isogeny of degree 7 on E_start")
+    P7 = E_start.division_polynomial(7)
+    ker7, _ = P7.factor()[0]
+    phi_left = E_start.isogeny(ker7)
+    print(phi_left)
 
-u = 714020003029005719823753224880815399155339403
-v = 28031663375683401880549715251102056676622848
-assert 2^301-3^188 == 7*(u*u+v*v)
+    u = 714020003029005719823753224880815399155339403
+    v = 28031663375683401880549715251102056676622848
+    assert 2^301-3^188 == 7*(u*u+v*v)
+else:
+    print("Using 2^305-19*3^189 = 11*(u²+v²) (max guesses = 27)")
+    print("Precompute an isogeny of degree 11 on E_start")
+    # Sage is confused by degree 1 factors
+    #P11 = E_start.division_polynomial(11)
+    #ker11, _ = P11.factor()[0]
+    phi_left = E_start.isogenies_prime_degree(11)[0]
+    print(phi_left)
+
+    u = 1550193735342211609960431880234414865472178337
+    v = 965894233082293540389053428058397267855495894
+    assert 2^305-19*3^189 == 11*(u*u+v*v)
 
 # Generate public torsion points, for SIKE implementations
 # these are fixed but to save loading in constants we can
@@ -68,15 +119,32 @@ print(f"If all goes well then the following digits should be found: {solution}")
 # The isogeny Eguess->EB is secret, isogeny diamond is (Eguess, EB, C, CB)
 # We don't compute aux, nor CB
 
-beta = 4 # 192-188
-alp = 4 # 350-301
-
-if '--parallel' in sys.argv:
+if opts.parallel:
     # Set number of cores for parallel computation
     num_cores = os.cpu_count()
     print(f"Performing the attack in parallel using {num_cores} cores")
 else:
     num_cores = 1
+
+# Attack starts here
+
+tim = time.time()
+
+if opts.mode == 7:
+    phiB = EB.identity_morphism()
+    # SAGE identity morphisms are not functions??
+    phiB._call_ = lambda x: x
+    beta = 4 # 192-188
+    alp = 4 # 305-301
+else:
+    print("Compute (once) an isogeny of degree 19 on E_B")
+    P19 = EB.division_polynomial(19)
+    ker19, _ = P19.factor()[0]
+    phiB = EB.isogeny(ker19)
+    print(phiB)
+    beta = 3 # 192-189
+    alp = 0 # 305-305
+    print(f"... done in {time.time()-tim:.3f} seconds")
 
 @possibly_parallel(num_cores)
 def CheckGuess(guess):
@@ -85,21 +153,25 @@ def CheckGuess(guess):
     print(f"Testing digits: {first_digits}")
 
     guessker = 3^(b-beta) * (P3 + guess*Q3)
-    guessker7 = phi7(u * guessker + (v//2) * two_i(guessker))
-    C, tau7 = Pushing3Chain(E7, guessker7, beta)
+    guessker_left = phi_left(u * guessker + (v//2) * two_i(guessker))
+    C, tau_C = Pushing3Chain(phi_left.codomain(), guessker_left, beta)
 
     # Now compute the image of 2-torsion in C
     def Estart_to_C(x):
         x = u * x + (v//2) * two_i(x) # endomorphism
-        x = phi7(x)
-        for c in tau7:
+        x = phi_left(x)
+        for c in tau_C:
             x = c(x)
         return x
 
     P2_C = Estart_to_C(P2)
     Q2_C = Estart_to_C(Q2)
-    split = Does22ChainSplit(C, EB,
-        2^alp*P2_C, 2^alp*Q2_C, 2^alp*PB, 2^alp*QB, a-alp)
+
+    # Replace EB by the codomain of phiB
+    split = Does22ChainSplit(C, phiB.codomain(),
+        2^alp*P2_C, 2^alp*Q2_C,
+        2^alp*phiB(PB), 2^alp*phiB(QB), a-alp)
+
     if split:
         Eguess, _ = Pushing3Chain(E_start, guessker, beta)
         chain, (E1, E2) = split
@@ -141,7 +213,6 @@ def CheckGuess(guess):
 
     return None
 
-tim = time.time()
 for result in CheckGuess(list(range(3^beta))):
     ((guess,), _), sk = result
     if sk is not None:
@@ -155,8 +226,8 @@ found = bobscurve.j_invariant() == EB.j_invariant()
 
 if found:
     print(f"Bob's secret key revealed as: {bobskey}")
-    print(f"In ternary, this is: {Integer(bobskey).digits(base=3)}")
-    print(f"Altogether this took {time.time() - tim} seconds.")
+    print(f"In ternary, this is: {Integer(bobskey).digits(base=3, padto=b)}")
+    print(f"Altogether this took {time.time() - tim:.3f} seconds.")
 else:
     print("Something went wrong.")
-    print(f"Altogether this took {time.time() - tim} seconds.")
+    print(f"Altogether this took {time.time() - tim:.3f} seconds.")
