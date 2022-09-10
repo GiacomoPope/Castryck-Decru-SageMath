@@ -52,8 +52,14 @@ def CastryckDecruAttack(E_start, P2, Q2, EB, PB, QB, two_i, num_cores=1):
         #  |    |
         #  v    v
         #  CB-> EB
-        split = Does22ChainSplit(C, EB, 2^alp*P_c, 2^alp*Q_c, 2^alp*PB, 2^alp*QB, ai)
+        split = Does22ChainSplit_NEW(C, EB, 2^alp*P_c, 2^alp*Q_c, 2^alp*PB, 2^alp*QB, ai)
         if split:
+            #TODO We currently have to re-run the slower Does22ChainSplit()
+            # here as Does22ChainSplit_NEW() only determines _whether_ the
+            # codomain splits, but does not yet construct the isogeny to
+            # the product.
+            split = Does22ChainSplit(C, EB, 2^alp*P_c, 2^alp*Q_c, 2^alp*PB, 2^alp*QB, ai)  #FIXME
+
             Eguess, _ = Pushing3Chain(E_start, tauhatkernel, bet1)
 
             chain, (E1, E2) = split

@@ -50,6 +50,7 @@ def test_ChainSplit():
     Q = -pow(k, -1, 2^a) * Q
     assert P.weil_pairing(Q, 2^a) * Pc.weil_pairing(Qc, 2^a) == 1
     assert not Does22ChainSplit(C, E, Pc, Qc, P, Q, 61)
+    assert not Does22ChainSplit_NEW(C, E, Pc, Qc, P, Q, 61)
 
 test_ChainSplit()
 
