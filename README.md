@@ -2,11 +2,15 @@
 
 SageMath implementation of [An efficient key recovery attack on SIDH, preliminary version](https://eprint.iacr.org/2022/975.pdf), based on supplied Magma code from [https://homes.esat.kuleuven.be/~wcastryc/](https://homes.esat.kuleuven.be/~wcastryc/).
 
-**Sage version**: This code was developed using SageMath 9.5, and works on the latest stable version: 9.6. Certain isogeny functions require SageMath 9.5 and above, so if the code does not run, check your current version with `sage --version`.
+**Sage version**: This code was developed using SageMath 9.5. Certain isogeny functions require SageMath 9.5 and above, so if the code does not run, check your current version with `sage --version`.
+
+## A Note on Reimplementing the Castryck-Decru Attack
+
+A note [A Note on Reimplementing the Castryck-Decru Attack and Lessons Learned for SageMath](https://eprint.iacr.org/2022/1283) has been uploaded to eprint. We hope that this gives a good background for the work accomplished in this repo, as well as some more general tips for implementing cryptographic attacks in SageMath.
 
 ## Deviation from Castryck-Decru Attack
 
-The latest commit introduces a modification of the Castryck-Decru attack in which only the first $\beta_1$ ternary digits must be guessed. Now, instead of recovering the remaining digits one by one, the secret isogeny is directly calculated from the result of the (2,2)-isogeny chain. 
+A recent commit introduces a modification of the Castryck-Decru attack in which only the first $\beta_1$ ternary digits must be guessed. Now, instead of recovering the remaining digits one by one, the secret isogeny is directly calculated from the result of the (2,2)-isogeny chain. 
 
 This modification was introduced in [#12 Implement direct computation of isogeny once the first splitting is found](https://github.com/jack4818/Castryck-Decru-SageMath/pull/19) and was acomplished by [Rémy Oudompheng](https://twitter.com/oudomphe).
 
