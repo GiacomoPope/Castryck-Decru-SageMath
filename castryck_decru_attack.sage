@@ -47,7 +47,7 @@ def CastryckDecruAttack(E_start, P2, Q2, EB, PB, QB, two_i, num_cores=1):
 
         C, P_c, Q_c, _ = AuxiliaryIsogeny(bet1, u, v, E_start, P2, Q2, tauhatkernel, two_i)
 
-        return Does22ChainSplit(C, EB, 2^alp*P_c, 2^alp*Q_c, 2^alp*PB, 2^alp*QB, ai)
+        return Does22ChainSplit_NEW(C, EB, 2^alp*P_c, 2^alp*Q_c, 2^alp*PB, 2^alp*QB, ai)
 
     guesses = [ZZ(i).digits(3, padto=bet1) for i in range(3^bet1-1)]
 
@@ -110,7 +110,7 @@ def CastryckDecruAttack(E_start, P2, Q2, EB, PB, QB, two_i, num_cores=1):
 
         C, P_c, Q_c, _ = AuxiliaryIsogeny(i, u, v, E_start, P2, Q2, tauhatkernel, two_i)
 
-        return Does22ChainSplit(C, endEB, 2^alp*P_c, 2^alp*Q_c, 2^alp*endPB, 2^alp*endQB, ai)
+        return Does22ChainSplit_NEW(C, endEB, 2^alp*P_c, 2^alp*Q_c, 2^alp*endPB, 2^alp*endQB, ai)
 
     for result in CheckGuess([0,1,2]):
         ((j,), _), is_split = result
@@ -171,7 +171,7 @@ def CastryckDecruAttack(E_start, P2, Q2, EB, PB, QB, two_i, num_cores=1):
 
             C, P_c, Q_c, _ = AuxiliaryIsogeny(i, u, v, E_start, P2, Q2, tauhatkernel, two_i)
 
-            return Does22ChainSplit(C, endEB, 2^alp*P_c, 2^alp*Q_c, 2^alp*endPB, 2^alp*endQB, ai)
+            return Does22ChainSplit_NEW(C, endEB, 2^alp*P_c, 2^alp*Q_c, 2^alp*endPB, 2^alp*endQB, ai)
 
         for result in CheckGuess([0,1]):
             ((j,), _), is_split = result

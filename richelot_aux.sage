@@ -444,3 +444,37 @@ def AuxiliaryIsogeny(i, u, v, E_start, P2, Q2, tauhatkernel, two_i):
             Pc = taut(Pc)
         return Pc
     return C, chain(P2), chain(Q2), chain
+
+
+# Code below from Sabrina Kunzweiler.
+# https://github.com/sabrinakunzweiler/Castryck-Decru-SageMath/tree/new-algorithm
+
+load('Richelot_formulae.sage')
+
+def FindGoodPartition(n):
+  # this is only a guess how a good partition might look like.
+  upper = floor(3/2*sqrt(n))
+  partition = [upper]
+  psum = upper;
+  while psum < n-upper-1 and upper > 5:
+    upper = upper-1
+    psum = psum + upper
+    partition.append(upper)
+  return partition
+
+def Does22ChainSplit_NEW(C, E, P_c, Q_c, P, Q, a):
+  Fp2 = C.base()
+  # gluing step
+  t_glue = cputime()
+  h, D11, D12, D21, D22, _ = FromProdToJac(C, E, P_c, Q_c, P, Q, a)
+#  print("gluing step", cputime(t_glue))
+#  print("order 2^", a-1)
+  t_trafo = cputime()
+  kernel, type2_invariants = TransformToType2_NEW(h, D11, D12, D21, D22, a-1)
+#  print("time transformation", cputime(t_trafo))
+  t_iso = cputime()
+  partition = FindGoodPartition(a-1)
+  split = RichelotChain_splitnew(type2_invariants, kernel,a-1, partition=partition)
+#  print("time isogeny", cputime(t_iso))
+  return split or None
+

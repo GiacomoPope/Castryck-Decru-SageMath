@@ -168,7 +168,7 @@ def CheckGuess(guess):
     Q2_C = Estart_to_C(Q2)
 
     # Replace EB by the codomain of phiB
-    split = Does22ChainSplit(C, phiB.codomain(),
+    split = Does22ChainSplit_NEW(C, phiB.codomain(),
         2^alp*P2_C, 2^alp*Q2_C,
         2^alp*phiB(PB), 2^alp*phiB(QB), a-alp)
 
