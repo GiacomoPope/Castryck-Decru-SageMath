@@ -37,11 +37,15 @@ There are 2 possible diagrams for this attack:
    Estart ---> Estart ------> CB'
 """
 
+# Python imports
 import time
 from itertools import product
-from helpers import supersingular_gens, fast_log3
 
-load('richelot_aux.sage')
+# Local Imports
+from helpers import supersingular_gens, fast_log3
+from richelot_aux import Does22ChainSplit, Pushing3Chain
+
+# Load Sage Files
 load('speedup.sage')
 
 # TODO: implement the first strategy (when k is not a sum of squares).

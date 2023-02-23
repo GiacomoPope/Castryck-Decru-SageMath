@@ -1,5 +1,5 @@
+from richelot_aux import *
 load('speedup.sage')
-load('richelot_aux.sage')
 
 def test_FromProdToJac():
     # Choose some supersingular curves and 2^a torsion generators.
@@ -28,7 +28,7 @@ test_FromProdToJac()
 
 def test_FromJacToJac():
     print("test_FromJacToJac")
-    h, D11, D12, D21, D22 = test_FromProdToJac()
+    h, D11, D12, D21, D22, _ = test_FromProdToJac()
     for e in FromJacToJac(h, D11, D12, D21, D22, 60):
         print(e)
 
@@ -52,4 +52,3 @@ def test_ChainSplit():
     assert not Does22ChainSplit(C, E, Pc, Qc, P, Q, 61)
 
 test_ChainSplit()
-

@@ -1,9 +1,13 @@
+# Python imports
 import time
 from itertools import product
-from helpers import possibly_parallel
 
-load('richelot_aux.sage')
-load('uvtable.sage')
+# Local Imports
+from helpers import possibly_parallel
+from richelot_aux import AuxiliaryIsogeny, Does22ChainSplit, Pushing3Chain
+from uvtable import uvtable
+
+# Load Sage Files
 load('speedup.sage')
 
 # ===================================

@@ -1,6 +1,8 @@
+# Local imports
 import public_values_aux
 from public_values_aux import *
 
+# Load Sage files
 load('castryck_decru_shortcut.sage')
 
 # Baby SIKEp64 parameters

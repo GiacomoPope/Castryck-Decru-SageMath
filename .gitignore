@@ -1,2 +1,4 @@
 **/.DS_Store
 **.sage.py
+
+__pycache__/*

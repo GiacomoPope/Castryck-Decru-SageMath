@@ -36,14 +36,17 @@ Case 11: 2^305-19*3^189 = 11*(u*u+v*v) (3^3 guesses)
 
 import time
 import argparse
+
+# Local imports
 from helpers import possibly_parallel, supersingular_gens, fast_log3
 import public_values_aux
 from public_values_aux import *
+from richelot_aux import Pushing3Chain, Does22ChainSplit
+
+# Load Sage Files
+load('speedup.sage')
 
 set_verbose(-1)
-
-load('speedup.sage')
-load('richelot_aux.sage')
 
 argp = argparse.ArgumentParser()
 argp.add_argument("--parallel", action="store_true")
