@@ -456,3 +456,189 @@ def AuxiliaryIsogeny(i, u, v, E_start, P2, Q2, tauhatkernel, two_i):
             Pc = taut(Pc)
         return Pc
     return C, chain(P2), chain(Q2), chain
+
+
+
+##############################################################################################
+############################################################################### New code below
+##############################################################################################
+def strategy(n):
+    """
+    output: the optimal strategy and its cost
+    """
+    eta = 1.000
+    mu  = 0.340
+
+    S = {1:[]}
+    C = {1:0 }
+    for i in range(2, n+1):
+        b, cost = min(((b, C[i-b] + C[b] + b*mu + (i-b)*eta) for b in range(1,i)), key=lambda t: t[1])
+        S[i] = [b] + S[i-b] + S[b]
+        C[i] = cost
+
+    return S[n], C[n]
+
+def FromProdToJac___(C, E, P_c2, Q_c2, P2, Q2):
+    # Same as FromProdToJac but assuming order-(2,2) kernel generator as inputs
+    Fp2 = C.base()
+    Rx = PolynomialRing(Fp2, name="x")
+    x = Rx.gens()[0]
+
+    a1, a2, a3 = P_c2[0], Q_c2[0], (P_c2 + Q_c2)[0]
+    b1, b2, b3 = P2[0], Q2[0], (P2 + Q2)[0]
+
+    # Compute coefficients
+    M = Matrix(Fp2, [
+        [a1*b1, a1, b1],
+        [a2*b2, a2, b2],
+        [a3*b3, a3, b3]])
+    R, S, T = M.inverse() * vector(Fp2, [1,1,1])
+    RD = R * M.determinant()
+    da = (a1 - a2)*(a2 - a3)*(a3 - a1)
+    db = (b1 - b2)*(b2 - b3)*(b3 - b1)
+
+    s1, t1 = - da / RD, db / RD
+    s2, t2 = -T/R, -S/R
+
+    a1_t = (a1 - s2) / s1
+    a2_t = (a2 - s2) / s1
+    a3_t = (a3 - s2) / s1
+    h = s1 * (x**2 - a1_t) * (x**2 - a2_t) * (x**2 - a3_t)
+
+    H = HyperellipticCurve(h)
+    J = H.jacobian()
+
+    def isogeny(pair):
+        # Argument members may be None to indicate the zero point.
+
+        # The projection maps are:
+        # H->C: (xC = s1/x²+s2, yC = s1 y)
+        # so we compute Mumford coordinates of the divisor f^-1(P_c): a(x), y-b(x)
+        Pc, P = pair
+        if Pc:
+            xPc, yPc = Pc.xy()
+            JPc = J([s1 * x**2 + s2 - xPc, Rx(yPc / s1)])
+        # Same for E
+        # H->E: (xE = t1 x² + t2, yE = t1 y/x^3)
+        if P:
+            xP, yP = P.xy()
+            JP = J([(xP - t2) * x**2 - t1, yP * x**3 / t1])
+        if Pc and P:
+            return JPc + JP
+        if Pc:
+            return JPc
+        if P:
+            return JP
+
+    return h, isogeny
+
+def FromJacToJac___(h, D11, D12, D21, D22):
+    # Same as FromJacToJac but assuming order-(2,2) kernel generator as inputs
+    R,x = h.parent().objgen()
+    Fp2 = R.base()
+
+    D1 = (D11, D12)
+    D2 = (D21, D22)
+
+    G1, G2 = D1[0].monic(), D2[0].monic()
+    G3, r3 = h.quo_rem(G1 * G2)
+    assert r3 == 0
+
+    delta = Matrix(G.padded_list(3) for G in (G1,G2,G3))
+    # H1 = 1/det (G2[1]*G3[0] - G2[0]*G3[1])
+    #        +2x (G2[2]*G3[0] - G3[2]*G2[0])
+    #        +x^2(G2[1]*G3[2] - G3[1]*G2[2])
+    # The coefficients correspond to the inverse matrix of delta.
+    delta = delta.inverse()
+    H1 = -delta[0][0]*x**2 + 2*delta[1][0]*x - delta[2][0]
+    H2 = -delta[0][1]*x**2 + 2*delta[1][1]*x - delta[2][1]
+    H3 = -delta[0][2]*x**2 + 2*delta[1][2]*x - delta[2][2]
+
+    hnew = H1*H2*H3
+
+    # Now compute image points: Richelot isogeny is defined by the degree 2
+    R = RichelotCorr(G1, G2, H1, H2, hnew)
+    return hnew, R.map
+
+def Does22ChainSplit___(C, E, P_c, Q_c, P, Q, a, St):
+    # Optimized implementation of Does22ChainSplit using optimal strategies
+    """
+    Returns None if the chain does not split
+    or a tuple (chain of isogenies, codomain (E1, E2))
+    """
+
+    k = 0
+    K = []
+    # A is the initial PPAS := E x C
+    h = [ (P_c, P), (Q_c, Q) ]
+    K.append(h)
+    level = [0]
+    assert len(St) == (a - 1)
+
+    chain = []
+
+    #############
+    # Gluing step
+    prev = sum(level)
+    while prev != (a - 1):
+        level.append(St[k])
+        h = K[-1]
+        for j in range(prev, prev + St[k], 1):
+            h = [(2 * h[0][0], 2 * h[0][1]), (2 * h[1][0], 2 * h[1][1])]
+        K.append(h)
+        prev += St[k]
+        k += 1
+
+    h = K[-1]
+    A, f = FromProdToJac___(C, E, h[0][0], h[1][0], h[0][1], h[1][1])
+
+    chain.append(f)
+    K.pop()
+    level.pop()
+    K = [(f(Ki[0]), f(Ki[1])) for Ki in K] # pushing through (2,2)-isogeny
+
+    ##############
+    # Middle steps
+    # (2,2)-isogenies between Jacobians different from products of elliptic curves
+    for i in range(1, a - 1, 1):
+        prev = sum(level)
+        h = K[-1]
+        while prev != (a - 1 - i):
+            level.append(St[k])
+            h0 = h[0]
+            h1 = h[1]
+            h0 = jacobian_iter_double(A, h0[0], h0[1], St[k])
+            h1 = jacobian_iter_double(A, h1[0], h1[1], St[k])
+            h = [h0, h1]
+            K.append(h)
+            prev += St[k]
+            k += 1
+
+        A, f = FromJacToJac___(A, h[0][0], h[0][1], h[1][0], h[1][1])
+
+        chain.append(f)
+        K.pop()
+        level.pop()
+        K = [(f(Ki[0]), f(Ki[1])) for Ki in K] # pushing through (2,2)-isogeny
+
+
+    ################
+    # Splitting step
+    # now we are left with a quadratic splitting: is it singular?
+    assert len(K) == 1
+    h = K[-1]
+    G1 = h[0][0]
+    G2 = h[1][0]
+    G3, r3 = A.quo_rem(G1 * G2)
+    assert r3 == 0
+
+    delta = Matrix(G.padded_list(3) for G in (G1,G2,G3))
+    if delta.determinant():
+        # Determinant is non-zero, no splitting
+        return None
+
+    # Splitting found!
+    # Finish chain
+    f, A = FromJacToProd(G1, G2, G3)
+    chain.append(f)
+    return chain, A

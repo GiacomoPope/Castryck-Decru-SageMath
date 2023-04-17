@@ -4,7 +4,7 @@ from itertools import product
 
 # Local Imports
 from helpers import possibly_parallel
-from richelot_aux import AuxiliaryIsogeny, Does22ChainSplit, Pushing3Chain
+from richelot_aux import AuxiliaryIsogeny, Does22ChainSplit, Does22ChainSplit___, Pushing3Chain, strategy
 from uvtable import uvtable
 
 # Load Sage Files
@@ -14,7 +14,7 @@ load('speedup.sage')
 # =====  ATTACK  ====================
 # ===================================
 
-def CastryckDecruAttack(E_start, P2, Q2, EB, PB, QB, two_i, num_cores=1):
+def CastryckDecruAttack(E_start, P2, Q2, EB, PB, QB, two_i, num_cores=1, strategies=False):
     tim = time.time()
 
     skB = [] # TERNARY DIGITS IN EXPANSION OF BOB'S SECRET KEY
@@ -40,6 +40,10 @@ def CastryckDecruAttack(E_start, P2, Q2, EB, PB, QB, two_i, num_cores=1):
     bi = b - bet1
     alp = a - ai
 
+    print(f'Strategy technique:\t{strategies}\n')
+    if strategies:
+        St, _ = strategy(ai)
+
     @possibly_parallel(num_cores)
     def CheckGuess(first_digits):
         print(f"Testing digits: {first_digits}")
@@ -51,7 +55,10 @@ def CastryckDecruAttack(E_start, P2, Q2, EB, PB, QB, two_i, num_cores=1):
 
         C, P_c, Q_c, _ = AuxiliaryIsogeny(bet1, u, v, E_start, P2, Q2, tauhatkernel, two_i)
 
-        return Does22ChainSplit(C, EB, 2^alp*P_c, 2^alp*Q_c, 2^alp*PB, 2^alp*QB, ai)
+        if not strategies:
+            return Does22ChainSplit(C, EB, 2^alp*P_c, 2^alp*Q_c, 2^alp*PB, 2^alp*QB, ai)
+        else:
+            return Does22ChainSplit___(C, EB, 2^alp*P_c, 2^alp*Q_c, 2^alp*PB, 2^alp*QB, ai, St)
 
     guesses = [ZZ(i).digits(3, padto=bet1) for i in range(3^bet1-1)]
 
@@ -114,7 +121,10 @@ def CastryckDecruAttack(E_start, P2, Q2, EB, PB, QB, two_i, num_cores=1):
 
         C, P_c, Q_c, _ = AuxiliaryIsogeny(i, u, v, E_start, P2, Q2, tauhatkernel, two_i)
 
-        return Does22ChainSplit(C, endEB, 2^alp*P_c, 2^alp*Q_c, 2^alp*endPB, 2^alp*endQB, ai)
+        if not strategies:
+            return Does22ChainSplit(C, endEB, 2^alp*P_c, 2^alp*Q_c, 2^alp*endPB, 2^alp*endQB, ai)
+        else:
+            return Does22ChainSplit___(C, endEB, 2^alp*P_c, 2^alp*Q_c, 2^alp*endPB, 2^alp*endQB, ai, St)
 
     for result in CheckGuess([0,1,2]):
         ((j,), _), is_split = result
@@ -166,6 +176,9 @@ def CastryckDecruAttack(E_start, P2, Q2, EB, PB, QB, two_i, num_cores=1):
             # Speeds things up in Sage
             endEB.set_order((p+1)^2, num_checks=0)
 
+        if strategies:
+            St, _ = strategy(ai)
+
         @possibly_parallel(num_cores)
         def CheckGuess(j):
             print(f"Testing digit: {j}")
@@ -175,7 +188,10 @@ def CastryckDecruAttack(E_start, P2, Q2, EB, PB, QB, two_i, num_cores=1):
 
             C, P_c, Q_c, _ = AuxiliaryIsogeny(i, u, v, E_start, P2, Q2, tauhatkernel, two_i)
 
-            return Does22ChainSplit(C, endEB, 2^alp*P_c, 2^alp*Q_c, 2^alp*endPB, 2^alp*endQB, ai)
+            if not strategies:
+                return Does22ChainSplit(C, endEB, 2^alp*P_c, 2^alp*Q_c, 2^alp*endPB, 2^alp*endQB, ai)
+            else:
+                return Does22ChainSplit___(C, endEB, 2^alp*P_c, 2^alp*Q_c, 2^alp*endPB, 2^alp*endQB, ai, St)
 
         for result in CheckGuess([0,1]):
             ((j,), _), is_split = result
