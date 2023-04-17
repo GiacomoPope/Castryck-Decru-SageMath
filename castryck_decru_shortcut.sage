@@ -4,7 +4,7 @@ from itertools import product
 
 # Local Imports
 from helpers import possibly_parallel, supersingular_gens, fast_log3
-from richelot_aux import AuxiliaryIsogeny, Does22ChainSplit, Pushing3Chain
+from richelot_aux import AuxiliaryIsogeny, Does22ChainSplit, Does22ChainSplit___, Pushing3Chain, strategy
 from uvtable import uvtable
 
 # Load Sage Files
@@ -14,8 +14,7 @@ load('speedup.sage')
 # =====  ATTACK  ====================
 # ===================================
 
-
-def CastryckDecruAttack(E_start, P2, Q2, EB, PB, QB, two_i, num_cores=1):
+def CastryckDecruAttack(E_start, P2, Q2, EB, PB, QB, two_i, num_cores=1, strategies=False):
     tim = time.time()
 
     skB = [] # TERNARY DIGITS IN EXPANSION OF BOB'S SECRET KEY
@@ -41,6 +40,10 @@ def CastryckDecruAttack(E_start, P2, Q2, EB, PB, QB, two_i, num_cores=1):
     bi = b - bet1
     alp = a - ai
 
+    print(f'Strategy technique:\t{strategies}\n')
+    if strategies:
+        St, _ = strategy(ai)
+
     @possibly_parallel(num_cores)
     def CheckGuess(first_digits):
         print(f"Testing digits: {first_digits}")
@@ -56,7 +59,11 @@ def CastryckDecruAttack(E_start, P2, Q2, EB, PB, QB, two_i, num_cores=1):
         #  |    |
         #  v    v
         #  CB-> EB
-        split = Does22ChainSplit(C, EB, 2^alp*P_c, 2^alp*Q_c, 2^alp*PB, 2^alp*QB, ai)
+        if not strategies:
+            split = Does22ChainSplit(C, EB, 2^alp*P_c, 2^alp*Q_c, 2^alp*PB, 2^alp*QB, ai)
+        else:
+            split = Does22ChainSplit___(C, EB, 2^alp*P_c, 2^alp*Q_c, 2^alp*PB, 2^alp*QB, ai, St)
+
         if split:
             Eguess, _ = Pushing3Chain(E_start, tauhatkernel, bet1)
 
